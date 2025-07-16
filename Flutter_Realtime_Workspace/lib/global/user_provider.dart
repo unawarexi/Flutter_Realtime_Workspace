@@ -109,7 +109,8 @@ class UserNotifier extends StateNotifier<UserState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       await UserApi.deleteMyUserInfo();
-      state = state.copyWith(userInfo: null, isLoading: false);
+      // Clear all user state after deletion
+      state = UserState(isLoading: false);
     } catch (e) {
       state =
           state.copyWith(userInfo: null, isLoading: false, error: e.toString());
@@ -117,16 +118,16 @@ class UserNotifier extends StateNotifier<UserState> {
   }
 
   // Regenerate invite code
-  Future<void> regenerateInviteCode() async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      final result = await UserApi.regenerateInviteCode();
-      state = state.copyWith(
-          userInfo: {...?state.userInfo, ...result}, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
-  }
+  // Future<void> regenerateInviteCode() async {
+  //   state = state.copyWith(isLoading: true, error: null);
+  //   try {
+  //     final result = await UserApi.regenerateInviteCode();
+  //     state = state.copyWith(
+  //         userInfo: {...?state.userInfo, ...result}, isLoading: false);
+  //   } catch (e) {
+  //     state = state.copyWith(isLoading: false, error: e.toString());
+  //   }
+  // }
 
   // Upload profile picture
   Future<void> uploadProfilePicture(String imagePath) async {
@@ -147,7 +148,8 @@ class UserNotifier extends StateNotifier<UserState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final users = await UserApi.getAllUserInfos();
-      state = state.copyWith(userInfo: {'users': users}, isLoading: false);
+      final prev = state.userInfo ?? {};
+      state = state.copyWith(userInfo: {...prev, 'users': users}, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -165,28 +167,38 @@ class UserNotifier extends StateNotifier<UserState> {
   }
 
   // Revoke referral code for a user (admin)
-  Future<void> revokeReferralCode(String id) async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      final result = await UserApi.revokeUserReferralCode(id);
-      state = state.copyWith(
-          userInfo: {...?state.userInfo, ...result}, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
-  }
+  // Future<void> revokeReferralCode(String id) async {
+  //   state = state.copyWith(isLoading: true, error: null);
+  //   try {
+  //     final result = await UserApi.revokeUserReferralCode(id);
+  //     state = state.copyWith(
+  //         userInfo: {...?state.userInfo, ...result}, isLoading: false);
+  //   } catch (e) {
+  //     state = state.copyWith(isLoading: false, error: e.toString());
+  //   }
+  // }
 
   // Update invite permissions for a user (admin)
-  Future<void> updateInvitePermissions(
-      String id, Map<String, dynamic> invitePermissions) async {
-    state = state.copyWith(isLoading: true, error: null);
+//   Future<void> updateInvitePermissions(
+//       String id, Map<String, dynamic> invitePermissions) async {
+//     state = state.copyWith(isLoading: true, error: null);
+//     try {
+//       final result =
+//           await UserApi.updateInvitePermissions(id, invitePermissions);
+//       state = state.copyWith(
+//           userInfo: {...?state.userInfo, ...result}, isLoading: false);
+//     } catch (e) {
+//       state = state.copyWith(isLoading: false, error: e.toString());
+//     }
+//   }
+
+  // Fetch user by invite code or email
+  Future<Map<String, dynamic>?> fetchUserByInviteCodeOrEmail({String? inviteCode, String? email}) async {
     try {
-      final result =
-          await UserApi.updateInvitePermissions(id, invitePermissions);
-      state = state.copyWith(
-          userInfo: {...?state.userInfo, ...result}, isLoading: false);
+      final user = await UserApi.getUserByInviteCodeOrEmail(inviteCode: inviteCode, email: email);
+      return user;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      return null;
     }
   }
 }

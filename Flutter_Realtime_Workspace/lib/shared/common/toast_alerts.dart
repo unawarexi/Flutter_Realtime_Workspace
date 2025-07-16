@@ -9,7 +9,7 @@ class AppToast {
     String message, {
     ToastType type = ToastType.info,
     ToastGravity gravity = ToastGravity.TOP,
-    int durationSeconds = 3,
+    int durationSeconds = 10,
     String? title,
     required BuildContext context,
   }) {
@@ -59,7 +59,7 @@ class AppToast {
           icon: Icons.warning_amber_rounded,
         );
       case ToastType.info:
-      return const _ToastStyle(
+        return const _ToastStyle(
           color: Color(0xFF3B82F6),
           icon: Icons.info_rounded,
         );
@@ -235,30 +235,33 @@ class _AdvancedToastWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double width = MediaQuery.of(context).size.width * 0.92;
+    final double width =
+        MediaQuery.of(context).size.width * 0.82; // reduced width
 
     return Container(
       width: width,
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      margin: const EdgeInsets.symmetric(
+          horizontal: 18, vertical: 4), // tighter margin
+      padding: const EdgeInsets.symmetric(
+          horizontal: 14, vertical: 10), // less padding
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14), // smaller radius
         boxShadow: [
           BoxShadow(
-            color: style.color.withOpacity(0.18),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
+            color: style.color.withOpacity(0.13),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
           ),
         ],
         border: Border.all(
-          color: style.color.withOpacity(0.22),
-          width: 1.2,
+          color: style.color.withOpacity(0.18),
+          width: 1,
         ),
       ),
       child: Row(
@@ -266,17 +269,17 @@ class _AdvancedToastWidget extends StatelessWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: style.color.withOpacity(0.13),
+              color: style.color.withOpacity(0.11),
               shape: BoxShape.circle,
             ),
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(5),
             child: Icon(
               style.icon,
               color: style.color,
-              size: 28,
+              size: 20, // smaller icon
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,21 +290,23 @@ class _AdvancedToastWidget extends StatelessWidget {
                     title!,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 15,
+                      fontSize: 13,
                       color: style.color,
                       letterSpacing: 0.1,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                 ],
                 Text(
                   message,
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: Color(0xFF1E293B),
-                    height: 1.35,
+                    height: 1.3,
                   ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -334,19 +339,27 @@ extension AppToastExtension on BuildContext {
 
 // Utility methods for common toast types
 extension AppToastUtils on AppToast {
-  static void success(String message, {String? title, required BuildContext context}) {
-    AppToast.show(message, type: ToastType.success, title: title, context: context);
+  static void success(String message,
+      {String? title, required BuildContext context}) {
+    AppToast.show(message,
+        type: ToastType.success, title: title, context: context);
   }
 
-  static void error(String message, {String? title, required BuildContext context}) {
-    AppToast.show(message, type: ToastType.error, title: title, context: context);
+  static void error(String message,
+      {String? title, required BuildContext context}) {
+    AppToast.show(message,
+        type: ToastType.error, title: title, context: context);
   }
 
-  static void warning(String message, {String? title, required BuildContext context}) {
-    AppToast.show(message, type: ToastType.warning, title: title, context: context);
+  static void warning(String message,
+      {String? title, required BuildContext context}) {
+    AppToast.show(message,
+        type: ToastType.warning, title: title, context: context);
   }
 
-  static void info(String message, {String? title, required BuildContext context}) {
-    AppToast.show(message, type: ToastType.info, title: title, context: context);
+  static void info(String message,
+      {String? title, required BuildContext context}) {
+    AppToast.show(message,
+        type: ToastType.info, title: title, context: context);
   }
 }

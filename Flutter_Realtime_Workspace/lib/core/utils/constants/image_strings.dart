@@ -5,6 +5,10 @@ class TImages {
   static const String darkEmblem = "assets/logo/darkemblem3.png";
   static const String lightEmblem = "assets/logo/lightemblem3.png";
 
+  // splash screen
+  static const String splashLight = "assets/icons/splashlight.png";
+  static const String splashDark = "assets/icons/splashdark.png";
+
   //wecome screen
   static const String welcomeImage = "assets/images/doc.jpg";
   static const String welcomeImage2 = "assets/images/doc2.jpg";

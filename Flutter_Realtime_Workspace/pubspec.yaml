@@ -33,10 +33,12 @@ dependencies:
 
   # --- FILES / MEDIA ---
   image_picker: ^1.1.2
+  file_picker: ^10.2.0
 
   # --- UTILITIES ---
   http: ^0.13.5
   dio: ^5.8.0+1
+  dio_smart_retry: ^7.0.1
   intl: ^0.20.2
   logger: ^2.4.0
   url_launcher: ^6.3.0
@@ -54,6 +56,7 @@ dependencies:
   local_auth: ^2.3.0
   uuid: ^4.5.0
   wakelock_plus: ^1.3.2
+  permission_handler: ^12.0.0+1
 
   # --- UI / ICONS ---
   sign_button: ^2.0.6
@@ -64,6 +67,9 @@ dependencies:
   gantt_chart: ^0.3.0
   iconsax: ^0.0.8
   cupertino_icons: ^1.0.8
+  flutter_launcher_icons: ^0.14.4
+  animated_splash_screen: ^1.3.0
+  page_transition: ^2.2.1
 
   # --- STATE MANAGEMENT ---
   flutter_riverpod: ^2.5.1
@@ -83,6 +89,19 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^4.0.0
 
+# use 3 rows from every corner for equal shaped icon
+flutter_launcher_icons:
+  android: true
+  image_path_android: assets/icons/icon6.png
+  android_adaptive_icon_background: "#F7FAFC"
+  android_adaptive_icon_foreground: assets/icons/icon6.png
+  adaptive_icon_background: "#F7FAFC"
+  # For iOS, we use a different image and background color
+  ios: true
+  image_path_ios: assets/icons/icon6.png
+  background_color_ios : "#F7FAFC"
+  remove_alpha_ios: true
+
 # flutter_slidable:
 #     git:
 #       url: https://github.com/letsar/flutter_slidable.git
@@ -100,7 +119,7 @@ flutter:
     # - assets/icons/
     - assets/images/
     - assets/lotties/projectGIF.gif
-    - assets/
+    - assets/icons/
    
   fonts:
     - family: Poppins

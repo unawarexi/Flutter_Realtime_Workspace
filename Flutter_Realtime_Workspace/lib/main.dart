@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'app.dart';
 import 'package:flutter_realtime_workspace/core/network/pull_refresh.dart';
+import "splash_screen.dart";
 
 // Global keys for app-wide access
 class GlobalKeys {
@@ -61,16 +62,43 @@ class RefreshProvider extends InheritedWidget {
   }
 }
 
+// Root app wrapper that includes MaterialApp and splash screen
+class RootApp extends StatelessWidget {
+  const RootApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'TeamSpot',
+      navigatorKey: GlobalKeys.navigatorKey,
+      scaffoldMessengerKey: GlobalKeys.scaffoldMessengerKey,
+      theme: ThemeData(
+        primaryColor: const Color(0xFF0A0E1A),
+        scaffoldBackgroundColor: const Color(0xFFE2E8F0),
+        // Add other theme properties as needed
+      ),
+      home: const TeamSpotSplashScreen(
+        nextScreen: GlobalRefreshWrapper(
+          child: App(),
+        ),
+      ),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  // Wrap the app with GlobalRefreshWrapper for app-wide pull-to-refresh
-  runApp(
-    const GlobalRefreshWrapper(
-      child: App(),
-    ),
-  );
+  // Initialize network module with retry config and baseUrl from env
+  // NetworkModule.initialize(
+  //   baseUrl: Environment.baseUrl,
+  //   retryConfig: RetryPresets.aggressive,
+  // );
+
+  // Now the splash screen is inside MaterialApp context
+  runApp(const RootApp());
 }

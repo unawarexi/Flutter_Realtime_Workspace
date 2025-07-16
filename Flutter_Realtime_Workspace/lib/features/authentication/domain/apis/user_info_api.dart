@@ -6,8 +6,9 @@ class UserApi {
   static final Dio _dio = Dio(
     BaseOptions(
       baseUrl: '${Environment.baseUrl}userinfo',
-      // connectTimeout: const Duration(seconds: 60),
-      // receiveTimeout: const Duration(seconds: 60),
+       connectTimeout: const Duration(minutes: 2), // ⏱️ 2 minutes
+      receiveTimeout: const Duration(minutes: 2),
+      sendTimeout: const Duration(minutes: 2),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -23,58 +24,24 @@ class UserApi {
     return token;
   }
 
-  // Helper method to safely cast response data
-  static Map<String, dynamic> _safeResponseCast(dynamic responseData) {
+  // Simplified response handling - returns dynamic
+  static dynamic _safeResponseCast(dynamic responseData) {
     if (responseData == null) {
       throw Exception("Response data is null");
     }
-
-    if (responseData is Map<String, dynamic>) {
-      return responseData;
-    } else if (responseData is Map) {
-      // Convert Map<dynamic, dynamic> to Map<String, dynamic>
-      return Map<String, dynamic>.from(responseData);
-    } else if (responseData is List) {
-      // If the backend returns a list, take the first item if available
-      if (responseData.isNotEmpty && responseData.first is Map) {
-        print('[UserApi][WARN] Response is a List, extracting first item.');
-        return Map<String, dynamic>.from(responseData.first);
-      } else {
-        throw Exception("Response data is a List but empty or not a Map");
-      }
-    } else {
-      throw Exception(
-          "Invalid response data type: ${responseData.runtimeType}");
-    }
+    return responseData;
   }
 
-  // Helper method to safely cast list response data
-  static List<Map<String, dynamic>> _safeListResponseCast(
-      dynamic responseData) {
+  // Simplified list response handling - returns dynamic
+  static dynamic _safeListResponseCast(dynamic responseData) {
     if (responseData == null) {
       throw Exception("Response data is null");
     }
-
-    if (responseData is List<Map<String, dynamic>>) {
-      return responseData;
-    } else if (responseData is List) {
-      return responseData.map((item) {
-        if (item is Map<String, dynamic>) {
-          return item;
-        } else if (item is Map) {
-          return Map<String, dynamic>.from(item);
-        } else {
-          throw Exception("Invalid list item type: ${item.runtimeType}");
-        }
-      }).toList();
-    } else {
-      throw Exception(
-          "Invalid response data type: ${responseData.runtimeType}");
-    }
+    return responseData;
   }
 
   // Get current user's info from backend
-  static Future<Map<String, dynamic>> getMyUserInfo() async {
+  static Future<dynamic> getMyUserInfo() async {
     try {
       final idToken = await _getToken();
       print('[UserApi] GET /me with token: $idToken');
@@ -115,8 +82,7 @@ class UserApi {
   }
 
   // Create or update (upsert) user info (supports image upload)
-  static Future<Map<String, dynamic>> createOrUpdateMyUserInfo(
-      Map<String, dynamic> data,
+  static Future<dynamic> createOrUpdateMyUserInfo(dynamic data,
       {String? imagePath}) async {
     try {
       final idToken = await _getToken();
@@ -202,15 +168,13 @@ class UserApi {
   }
 
   // Update user info (supports image upload)
-  static Future<Map<String, dynamic>> updateMyUserInfo(
-      Map<String, dynamic> data,
+  static Future<dynamic> updateMyUserInfo(dynamic data,
       {String? imagePath}) async {
     try {
       final idToken = await _getToken();
 
       // Clean and validate data before sending
       final cleanData = _cleanPayloadData(data);
-      // Keep this print for debugging payload
       print('[UserApi] Cleaned payload data for update: $cleanData');
 
       Response response;
@@ -221,7 +185,6 @@ class UserApi {
               await MultipartFile.fromFile(imagePath, filename: 'profile.jpg'),
         });
 
-        // Keep this print for debugging file upload
         print(
             '[UserApi] PUT /me (multipart) with token: $idToken, imagePath: $imagePath');
 
@@ -236,7 +199,6 @@ class UserApi {
           ),
         );
       } else {
-        // Keep this print for debugging JSON update
         print('[UserApi] PUT /me with token: $idToken, data: $cleanData');
 
         response = await _dio.put(
@@ -251,7 +213,6 @@ class UserApi {
         );
       }
 
-      // Keep this print for debugging response
       print('[UserApi] Raw response from PUT /me: ${response.data}');
       final safeData = _safeResponseCast(response.data);
       print('[UserApi] Processed response from PUT /me: $safeData');
@@ -273,43 +234,49 @@ class UserApi {
     }
   }
 
-  // Helper method to clean and validate payload data
-  static Map<String, dynamic> _cleanPayloadData(Map<String, dynamic> data) {
-    final cleanData = <String, dynamic>{};
+  // Helper method to clean and validate payload data - now accepts dynamic
+  static dynamic _cleanPayloadData(dynamic data) {
+    if (data == null) return {};
 
-    for (final entry in data.entries) {
-      final key = entry.key;
-      final value = entry.value;
+    if (data is Map) {
+      final cleanData = <String, dynamic>{};
 
-      // Skip null or empty string values
-      if (value == null || (value is String && value.trim().isEmpty)) {
-        continue;
-      }
+      for (final entry in data.entries) {
+        final key = entry.key?.toString() ?? '';
+        final value = entry.value;
 
-      // Handle nested objects
-      if (value is Map) {
-        final nestedClean = _cleanPayloadData(Map<String, dynamic>.from(value));
-        if (nestedClean.isNotEmpty) {
-          cleanData[key] = nestedClean;
+        // Skip null or empty string values
+        if (value == null || (value is String && value.trim().isEmpty)) {
+          continue;
+        }
+
+        // Handle nested objects
+        if (value is Map) {
+          final nestedClean = _cleanPayloadData(value);
+          if (nestedClean is Map && nestedClean.isNotEmpty) {
+            cleanData[key] = nestedClean;
+          }
+        }
+        // Handle arrays
+        else if (value is List) {
+          final cleanList = value
+              .where((item) =>
+                  item != null && (item is! String || item.trim().isNotEmpty))
+              .toList();
+          if (cleanList.isNotEmpty) {
+            cleanData[key] = cleanList;
+          }
+        }
+        // Handle primitive values
+        else {
+          cleanData[key] = value;
         }
       }
-      // Handle arrays
-      else if (value is List) {
-        final cleanList = value
-            .where((item) =>
-                item != null && (item is! String || item.trim().isNotEmpty))
-            .toList();
-        if (cleanList.isNotEmpty) {
-          cleanData[key] = cleanList;
-        }
-      }
-      // Handle primitive values
-      else {
-        cleanData[key] = value;
-      }
+
+      return cleanData;
     }
 
-    return cleanData;
+    return data;
   }
 
   // Delete user info
@@ -339,7 +306,7 @@ class UserApi {
   }
 
   // Regenerate invite code
-  static Future<Map<String, dynamic>> regenerateInviteCode() async {
+  static Future<dynamic> regenerateInviteCode() async {
     try {
       final idToken = await _getToken();
       print('[UserApi] POST /me/regenerate-invite with token: $idToken');
@@ -371,8 +338,7 @@ class UserApi {
   }
 
   // Upload profile picture only
-  static Future<Map<String, dynamic>> uploadProfilePicture(
-      String imagePath) async {
+  static Future<dynamic> uploadProfilePicture(String imagePath) async {
     try {
       final idToken = await _getToken();
       final formData = FormData.fromMap({
@@ -414,7 +380,7 @@ class UserApi {
   }
 
   // Admin/utility: get all user infos
-  static Future<List<Map<String, dynamic>>> getAllUserInfos() async {
+  static Future<dynamic> getAllUserInfos() async {
     try {
       final idToken = await _getToken();
       print('[UserApi] GET / (all users) with token: $idToken');
@@ -426,8 +392,7 @@ class UserApi {
 
       print('[UserApi] Raw response from GET /: ${response.data}');
       final safeData = _safeListResponseCast(response.data);
-      print(
-          '[UserApi] Processed response from GET /: ${safeData.length} items');
+      print('[UserApi] Processed response from GET /: $safeData');
 
       return safeData;
     } on DioException catch (e) {
@@ -445,7 +410,7 @@ class UserApi {
   }
 
   // Admin/utility: get user info by id
-  static Future<Map<String, dynamic>> getUserInfoById(String id) async {
+  static Future<dynamic> getUserInfoById(String id) async {
     try {
       final idToken = await _getToken();
       print('[UserApi] GET /$id with token: $idToken');
@@ -475,7 +440,7 @@ class UserApi {
   }
 
   // Admin: revoke referral code for a user
-  static Future<Map<String, dynamic>> revokeUserReferralCode(String id) async {
+  static Future<dynamic> revokeUserReferralCode(String id) async {
     try {
       final idToken = await _getToken();
       print('[UserApi] POST /$id/revoke-referral with token: $idToken');
@@ -508,8 +473,8 @@ class UserApi {
   }
 
   // Admin: update invite permissions for a user
-  static Future<Map<String, dynamic>> updateInvitePermissions(
-      String id, Map<String, dynamic> invitePermissions) async {
+  static Future<dynamic> updateInvitePermissions(
+      String id, dynamic invitePermissions) async {
     try {
       final idToken = await _getToken();
       final payload = {"invitePermissions": invitePermissions};
@@ -546,6 +511,36 @@ class UserApi {
       throw Exception(errorMsg);
     } catch (e) {
       print('[UserApi][ERROR] updateInvitePermissions: $e');
+      rethrow;
+    }
+  }
+
+  // Fetch user by invite code or email
+  static Future<dynamic> getUserByInviteCodeOrEmail(
+      {String? inviteCode, String? email}) async {
+    try {
+      final idToken = await _getToken();
+      final queryParams = <String, String>{};
+      if (inviteCode != null && inviteCode.isNotEmpty)
+        queryParams['inviteCode'] = inviteCode;
+      if (email != null && email.isNotEmpty) queryParams['email'] = email;
+      if (queryParams.isEmpty) throw Exception("Provide inviteCode or email");
+
+      final uri = Uri.parse("${_dio.options.baseUrl}/find")
+          .replace(queryParameters: queryParams);
+      final response = await _dio.getUri(
+        uri,
+        options: Options(headers: {"Authorization": "Bearer $idToken"}),
+      );
+      final safeData = _safeResponseCast(response.data);
+      return safeData;
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data?['message'] ??
+          e.response?.data?['error'] ??
+          e.message ??
+          'Failed to fetch user by invite code/email';
+      throw Exception(errorMsg);
+    } catch (e) {
       rethrow;
     }
   }

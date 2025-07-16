@@ -6,6 +6,7 @@ import 'package:flutter_realtime_workspace/core/utils/helpers/helper_functions.d
 import 'package:flutter_realtime_workspace/features/authentication/presentation/widgets/options_screen.dart';
 import 'package:flutter_realtime_workspace/features/project_management/presentation/screens/create_project_screen.dart';
 import 'package:flutter_realtime_workspace/features/project_management/presentation/screens/create_task_screen.dart';
+import 'package:flutter_realtime_workspace/features/team_management/presentation/team_screen.dart';
 import 'package:flutter_realtime_workspace/shared/styles/colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_realtime_workspace/global/user_provider.dart';
@@ -445,12 +446,21 @@ class Home extends ConsumerWidget {
                 isDarkMode: isDarkMode,
               ),
             ),
-            _buildQuickActionCard(
-              icon: Icons.people_outline_rounded,
-              title: 'Invite Team',
-              subtitle: 'Collaborate',
-              color: const Color(0xFF10B981),
-              isDarkMode: isDarkMode,
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const TeamScreen()),
+                );
+              },
+              child: _buildQuickActionCard(
+                icon: Icons.people_outline_rounded,
+                title: 'Invite Team',
+                subtitle: 'Collaborate',
+                color: const Color(0xFF10B981),
+                isDarkMode: isDarkMode,
+              ),
             ),
             _buildQuickActionCard(
               icon: Icons.schedule_outlined,

@@ -72,6 +72,7 @@ class _BiometricAuthenticationState extends State<BiometricAuthentication> {
 
     return Consumer(
       builder: (context, ref, _) {
+        // Minimal UI for login (showSettings == false)
         if (!_isBiometricAvailable) {
           return Card(
             elevation: 0,
@@ -112,6 +113,91 @@ class _BiometricAuthenticationState extends State<BiometricAuthentication> {
           );
         }
 
+        if (!widget.showSettings) {
+          // Minimal, modern fingerprint card for login
+          return GestureDetector(
+            onTap: _isLoading ? null : () => _handleBiometricSignIn(ref),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              decoration: BoxDecoration(
+                color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDarkMode
+                      ? const Color(0xFF334155)
+                      : const Color(0xFFE2E8F0),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDarkMode
+                        ? Colors.black.withOpacity(0.10)
+                        : Colors.grey.withOpacity(0.06),
+                    blurRadius: 10,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _isLoading
+                      ? const SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                          ),
+                        )
+                      : Container(
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? const Color(0xFF334155)
+                                : const Color(0xFFF1F5F9),
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(14),
+                          child: Icon(
+                            Icons.fingerprint,
+                            size: 38,
+                            color: isDarkMode
+                                ? TColors.lightBlue
+                                : Theme.of(context).primaryColor,
+                          ),
+                        ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Sign in with biometrics',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: isDarkMode
+                          ? Colors.white
+                          : const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Secure biometric authentication',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDarkMode
+                          ? TColors.textSecondaryDark
+                          : TColors.textTertiaryLight,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // ...existing full settings UI...
         return Container(
           decoration: BoxDecoration(
             color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,

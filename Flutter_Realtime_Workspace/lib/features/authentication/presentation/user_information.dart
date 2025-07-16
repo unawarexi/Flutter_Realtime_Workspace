@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_realtime_workspace/core/utils/helpers/helper_functions.dart';
+import 'package:flutter_realtime_workspace/core/utils/file_picker.dart';
 import 'package:flutter_realtime_workspace/global/user_provider.dart';
 import 'package:flutter_realtime_workspace/shared/common/toast_alerts.dart';
 import 'package:flutter_realtime_workspace/shared/components/custom_bottom_navigiation.dart';
 import 'package:flutter_realtime_workspace/shared/styles/colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'dart:io';
-import 'package:image_picker/image_picker.dart';
 
 enum UserInfoMode { create, join }
 
@@ -226,12 +225,10 @@ class _UserInformationScreenState extends ConsumerState<UserInformationScreen> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final picked =
-        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (picked != null) {
+    final pickedFile = await pickImageFromGallery(imageQuality: 80);
+    if (pickedFile != null) {
       setState(() {
-        _pickedImageFile = File(picked.path);
+        _pickedImageFile = pickedFile;
       });
       // await _uploadProfileImage();
     }
@@ -1012,3 +1009,4 @@ class _UserInformationScreenState extends ConsumerState<UserInformationScreen> {
     );
   }
 }
+

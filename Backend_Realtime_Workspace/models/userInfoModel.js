@@ -33,11 +33,17 @@ const userInfoSchema = new mongoose.Schema(
     // Collaboration Details
     inviteCode: { type: String },
     inviteCodeExpiry: { type: Date }, // add this line
-    invitedBy: { type: String },
+    invitedBy: [
+      {
+        email: { type: String, required: true },
+        name: { type: String },
+        inviterCode: { type: String }, // the code used to join
+      },
+    ],
     referredTo: [
       {
         email: { type: String, required: true },
-        // You can add more fields here if needed (e.g., date, name)
+        name: { type: String },
       },
     ],
     teamProjectName: { type: String },

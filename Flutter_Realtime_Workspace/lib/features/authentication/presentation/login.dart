@@ -54,6 +54,7 @@ class _AuthenticationState extends State<Authentication> {
                     height: 1.1,
                   ),
                 ),
+                  const SizedBox(height: 14),
                 Text(
                   "Sign in to join the team",
                   style: TextStyle(
@@ -86,7 +87,7 @@ class _AuthenticationState extends State<Authentication> {
                     Expanded(child: GithubAuthentication()),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 50),
 
                 // Biometric Sign-In Button (no shadow, no rounded edges)
                 const Center(
