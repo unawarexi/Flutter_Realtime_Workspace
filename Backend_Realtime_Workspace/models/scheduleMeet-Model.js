@@ -38,9 +38,10 @@ const scheduleMeetSchema = new mongoose.Schema(
       end: { type: String, required: true }, // Format: "15:30"
     },
     duration: {
-      type: String,
+      type: Number, // Duration in minutes (changed from String enum to Number)
       required: true,
-      enum: ['15 minutes', '30 minutes', '45 minutes', '60 minutes', '90 minutes', '2 hours', '3 hours', '4 hours'],
+      min: 5, // Minimum 5 minutes
+      max: 480, // Maximum 8 hours
     },
     timezone: {
       type: String,
@@ -254,19 +255,9 @@ scheduleMeetSchema.index({ 'organizer.userID': 1, status: 1 });
 scheduleMeetSchema.index({ 'participants.userID': 1, meetingDate: 1 });
 scheduleMeetSchema.index({ companyName: 1, department: 1, meetingDate: 1 });
 
-// Virtual field for meeting duration in minutes
+// Virtual field for meeting duration (now just returns the duration field)
 scheduleMeetSchema.virtual('durationInMinutes').get(function () {
-  const durationMap = {
-    '15 minutes': 15,
-    '30 minutes': 30,
-    '45 minutes': 45,
-    '60 minutes': 60,
-    '90 minutes': 90,
-    '2 hours': 120,
-    '3 hours': 180,
-    '4 hours': 240,
-  };
-  return durationMap[this.duration] || 60;
+  return this.duration;
 });
 
 // Virtual field to check if meeting is upcoming
@@ -282,13 +273,40 @@ scheduleMeetSchema.virtual('isToday').get(function () {
   return today.toDateString() === meetingDay.toDateString();
 });
 
-// Pre-save middleware to update participant counts
+// Virtual field for formatted duration
+scheduleMeetSchema.virtual('formattedDuration').get(function () {
+  const duration = this.duration;
+  if (duration < 60) {
+    return `${duration} minutes`;
+  } else if (duration % 60 === 0) {
+    return `${duration / 60} hour${duration / 60 > 1 ? 's' : ''}`;
+  } else {
+    const hours = Math.floor(duration / 60);
+    const minutes = duration % 60;
+    return `${hours}h ${minutes}m`;
+  }
+});
+
+// Pre-save middleware to update participant counts and calculate end time
 scheduleMeetSchema.pre('save', function (next) {
   if (this.isModified('participants')) {
     this.analytics.acceptedCount = this.participants.filter((p) => p.status === 'accepted').length;
     this.analytics.declinedCount = this.participants.filter((p) => p.status === 'declined').length;
     this.analytics.invitesSent = this.participants.length;
   }
+
+  // Auto-calculate end time based on start time and duration
+  if (this.isModified('meetingTime.start') || this.isModified('duration')) {
+    const [startHours, startMinutes] = this.meetingTime.start.split(':').map(Number);
+    const startTotalMinutes = startHours * 60 + startMinutes;
+    const endTotalMinutes = startTotalMinutes + this.duration;
+
+    const endHours = Math.floor(endTotalMinutes / 60) % 24;
+    const endMinutes = endTotalMinutes % 60;
+
+    this.meetingTime.end = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+  }
+
   next();
 });
 
@@ -331,8 +349,8 @@ scheduleMeetSchema.methods.checkConflicts = async function () {
     _id: { $ne: this._id },
     status: 'scheduled',
     meetingDate: {
-      $gte: new Date(this.meetingDate.getTime() - this.durationInMinutes * 60000),
-      $lte: new Date(this.meetingDate.getTime() + this.durationInMinutes * 60000),
+      $gte: new Date(this.meetingDate.getTime() - this.duration * 60000),
+      $lte: new Date(this.meetingDate.getTime() + this.duration * 60000),
     },
     'participants.userID': {
       $in: this.participants.map((p) => p.userID),
@@ -356,6 +374,7 @@ scheduleMeetSchema.statics.findUserMeetings = function (userID, options = {}) {
     $or: [{ 'organizer.userID': userID }, { 'participants.userID': userID }],
     status: Array.isArray(status) ? { $in: status } : status,
     meetingDate: { $gte: startDate },
+    isDeleted: { $ne: true },
   };
 
   if (endDate) {
@@ -379,6 +398,7 @@ scheduleMeetSchema.statics.getAnalytics = function (companyName, options = {}) {
   const matchQuery = {
     companyName,
     meetingDate: { $gte: startDate, $lte: endDate },
+    isDeleted: { $ne: true },
   };
 
   if (department) {
@@ -396,6 +416,8 @@ scheduleMeetSchema.statics.getAnalytics = function (companyName, options = {}) {
         cancelledMeetings: { $sum: { $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0] } },
         avgAttendees: { $avg: '$analytics.actualAttendees' },
         totalAttendees: { $sum: '$analytics.actualAttendees' },
+        avgDuration: { $avg: '$duration' },
+        totalDuration: { $sum: '$duration' },
       },
     },
   ]);

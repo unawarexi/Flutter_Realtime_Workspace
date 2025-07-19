@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
-
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
@@ -15,7 +14,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendMail = async (to, subject, htmlContent,) => {
+const sendMail = async (to, subject, htmlContent) => {
   const mailOptions = {
     from: process.env.SMTP_USER_EMAIL,
     to,

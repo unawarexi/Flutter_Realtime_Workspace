@@ -21,7 +21,7 @@ class EmailContentGenerator {
   welcomeEmail(userData) {
     return {
       EMAIL_TITLE: "Welcome to TeamSpot - Let's Get Started! 🚀",
-      GREETING: `Welcome aboard, ${userData.firstName}! 🎉`,
+      GREETING: `Welcome aboard, ${userData.fullName}! 🎉`,
       MAIN_CONTENT: `
                 We're thrilled to have you join the TeamSpot family! Your workspace has been created and you're just moments away from experiencing seamless team collaboration like never before.
                 
@@ -101,7 +101,7 @@ class EmailContentGenerator {
   emailVerification(userData) {
     return {
       EMAIL_TITLE: 'Verify Your TeamSpot Account 📧',
-      GREETING: `Hi ${userData.firstName}!`,
+      GREETING: `Hi ${userData.fullName}!`,
       MAIN_CONTENT: `
                 Thanks for signing up with TeamSpot! To complete your registration and secure your account, 
                 please verify your email address by clicking the button below.
@@ -131,7 +131,7 @@ class EmailContentGenerator {
   passwordResetRequest(userData) {
     return {
       EMAIL_TITLE: 'Reset Your TeamSpot Password 🔒',
-      GREETING: `Hi ${userData.firstName},`,
+      GREETING: `Hi ${userData.fullName},`,
       MAIN_CONTENT: `
                 We received a request to reset your password for your TeamSpot account. If you made this request, 
                 click the button below to create a new password.
@@ -175,7 +175,7 @@ class EmailContentGenerator {
   passwordChangedConfirmation(userData) {
     return {
       EMAIL_TITLE: 'Your TeamSpot Password Was Changed ✅',
-      GREETING: `Hi ${userData.firstName},`,
+      GREETING: `Hi ${userData.fullName},`,
       MAIN_CONTENT: `
                 This email confirms that your TeamSpot account password was successfully changed on 
                 ${userData.changeTime || new Date().toLocaleString()}.
@@ -219,7 +219,7 @@ class EmailContentGenerator {
   accountLockedNotification(userData) {
     return {
       EMAIL_TITLE: 'Your TeamSpot Account Has Been Temporarily Locked 🔒',
-      GREETING: `Hi ${userData.firstName},`,
+      GREETING: `Hi ${userData.fullName},`,
       MAIN_CONTENT: `
                 For your security, we've temporarily locked your TeamSpot account due to multiple failed login attempts.
                 
@@ -1071,7 +1071,7 @@ class EmailContentGenerator {
   scheduledMaintenance(maintenanceData) {
     return {
       EMAIL_TITLE: `Scheduled Maintenance: ${maintenanceData.maintenanceTitle} 🔧`,
-      GREETING: `Hi ${maintenanceData.recipientName}!`,
+      GREETING: `Hi ${maintenanceData.fullName}!`,
       MAIN_CONTENT: `
             We're performing scheduled maintenance on TeamSpot to improve performance and add new features.
             
@@ -1135,7 +1135,7 @@ class EmailContentGenerator {
   securityAlert(securityData) {
     return {
       EMAIL_TITLE: `Security Alert: ${securityData.alertType} 🔐`,
-      GREETING: `Hi ${securityData.recipientName},`,
+      GREETING: `Hi ${securityData.fullName},`,
       MAIN_CONTENT: `
             We detected ${securityData.alertDescription} on your TeamSpot account.
             
@@ -1315,9 +1315,9 @@ class EmailContentGenerator {
   // Validate email data
   validateEmailData(emailType, data) {
     const requiredFields = {
-      welcome: ['firstName', 'userId'],
-      emailVerification: ['firstName', 'verificationUrl', 'userId'],
-      passwordReset: ['firstName', 'resetUrl', 'userId'],
+      welcome: ['fullName', 'userId'],
+      emailVerification: ['fullName', 'verificationUrl', 'userId'],
+      passwordReset: ['fullName', 'resetUrl', 'userId'],
       meetingInvitation: ['attendeeName', 'organizerName', 'meetingTitle', 'meetingDate', 'meetingTime'],
       taskAssignment: ['assigneeName', 'taskTitle', 'dueDate', 'assignerName'],
       workspaceInvitation: ['inviteeEmail', 'workspaceName', 'inviterName', 'acceptUrl'],
