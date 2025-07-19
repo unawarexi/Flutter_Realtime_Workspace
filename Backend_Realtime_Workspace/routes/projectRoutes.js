@@ -28,7 +28,12 @@ const router = express.Router();
 router.use(firebaseAuthMiddleware);
 
 // Project CRUD Operations
-router.post("/", upload.single("attachment"), multerErrorHandler, createProject); // <-- updated to support multipart/form-data
+router.post(
+  "/",
+  upload.array("attachments", 10),
+  multerErrorHandler,
+  createProject
+);
 router.get("/", getProjects);
 router.get("/stats", getProjectStats);
 router.get("/:id", getProjectById);

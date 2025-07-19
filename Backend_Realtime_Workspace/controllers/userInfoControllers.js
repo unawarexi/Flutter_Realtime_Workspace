@@ -51,18 +51,27 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
     data.referredTo = ensureReferredToArray(data.referredTo);
     data.invitedBy = ensureInvitedByArray(data.invitedBy);
 
-    // Handle image upload (keep existing logic)
+    // Handle image upload (FIXED)
     if (req.file) {
       try {
         console.log(
           "[createOrUpdateMyUserInfo] Image file detected:",
-          req.file.path
+          {
+            filename: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size
+          }
         );
+        
         const existingUser = await UserInfo.findOne({ email });
+        
+        // FIXED: Use correct parameters - buffer, originalname, folder
         const uploadResult = await uploadToCloudinary(
-          req.file.path,
-          "/projects/workspace"
+          req.file.buffer,           // Use buffer, not path
+          req.file.originalname,     // Use original filename
+          "/projects/workspace"      // Folder parameter
         );
+        
         console.log(
           "[createOrUpdateMyUserInfo] Uploaded to Cloudinary:",
           uploadResult
@@ -187,7 +196,6 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
     });
   }
 };
-
 // Update user info with improved referral handling
 export const updateMyUserInfo = async (req, res) => {
   try {

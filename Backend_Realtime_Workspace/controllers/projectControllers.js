@@ -2,8 +2,6 @@ import Project from "../models/projectModel.js";
 import {
   uploadToCloudinary,
   deleteFromCloudinary,
-  getOptimizedFileUrl,
-  multerErrorHandler,
 } from "../services/cloudinary.js";
 import mongoose from "mongoose";
 import { generateProjectKey, generateTeamId } from "../helpers/project_id_generator.js";
@@ -28,14 +26,37 @@ export const createProject = async (req, res) => {
       startDate,
       endDate,
       customFields,
-      key // allow custom key
+      key, // allow custom key
     } = req.body;
 
+    // Get the correct user ID from the auth middleware
+    const firebaseUid = req.user.uid; // Firebase UID
+    const mongoId = req.user.mongoId; // MongoDB ObjectID
+
+    // Use the userRecord from middleware or find the user
+    let user = req.user.userRecord;
+
+    if (!user) {
+      // Fallback: find user by Firebase UID
+      user = await UserInfo.findOne({ userID: firebaseUid });
+
+      // If still not found, try by MongoDB ObjectId
+      if (!user && mongoose.Types.ObjectId.isValid(mongoId)) {
+        user = await UserInfo.findById(mongoId);
+      }
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     // Parse fields if sent as JSON strings (from multipart/form-data)
-    if (typeof collaborators === "string") collaborators = JSON.parse(collaborators);
+    if (typeof collaborators === "string")
+      collaborators = JSON.parse(collaborators);
     if (typeof members === "string") members = JSON.parse(members);
     if (typeof tags === "string") tags = JSON.parse(tags);
-    if (typeof customFields === "string") customFields = JSON.parse(customFields);
+    if (typeof customFields === "string")
+      customFields = JSON.parse(customFields);
 
     // Validate required fields
     if (!name /*|| !teamId*/) {
@@ -61,7 +82,7 @@ export const createProject = async (req, res) => {
       priority: priority || "medium",
       color: color || "#1E40AF",
       teamId,
-      createdBy: req.user.id, // Assuming user is attached to req via auth middleware
+      createdBy: mongoId, // Assuming user is attached to req via auth middleware
       collaborators: collaborators || [],
       members: members || [],
       tags: tags || [],
@@ -78,35 +99,87 @@ export const createProject = async (req, res) => {
       ],
     });
 
-    // If file is uploaded, handle attachment
-    if (req.file) {
-      const uploadResult = await uploadToCloudinary(
-        req.file.path,
-        `/projects/${project.key}/attachments`,
-        req.file.originalname
-      );
-      const attachment = {
-        url: uploadResult.url,
-        public_id: uploadResult.public_id,
-        resource_type: uploadResult.resource_type,
-        format: uploadResult.format,
-        bytes: uploadResult.bytes,
-        filename: uploadResult.filename,
-        original_filename: uploadResult.original_filename,
-        type: uploadResult.type,
-        width: uploadResult.width,
-        height: uploadResult.height,
-        duration: uploadResult.duration,
-        uploadedAt: new Date(),
-        uploadedBy: req.user.id,
-      };
-      project.attachments.push(attachment);
-      project.timeline.push({
-        title: "Attachment Added",
-        description: `File "${attachment.filename}" was uploaded`,
-        date: new Date(),
-        type: "attachment",
+    // Handle multiple file uploads
+    if (req.files && req.files.length > 0) {
+      const uploadPromises = req.files.map(async (file) => {
+        try {
+          // FIX: Use the correct custom folder path as specified
+          const uploadResult = await uploadToCloudinary(
+            file.buffer,
+            file.originalname,
+           
+          );
+
+          // Log the upload result for debugging
+          console.log("Upload result:", JSON.stringify(uploadResult, null, 2));
+
+          // FIX: Handle both secure_url and url fields from Cloudinary
+          const fileUrl = uploadResult.secure_url || uploadResult.url;
+          
+          if (!fileUrl) {
+            throw new Error(
+              `Upload failed: No URL returned for file ${file.originalname}. Upload result: ${JSON.stringify(uploadResult)}`
+            );
+          }
+
+          // Ensure all required fields are present and properly structured
+          const attachment = {
+            url: fileUrl, // Use the correct URL field
+            public_id: uploadResult.public_id,
+            resource_type: uploadResult.resource_type,
+            format: uploadResult.format,
+            bytes: uploadResult.bytes,
+            filename: uploadResult.filename || file.originalname,
+            original_filename:
+              uploadResult.original_filename || file.originalname,
+            type: uploadResult.type || file.mimetype,
+            width: uploadResult.width || null,
+            height: uploadResult.height || null,
+            duration: uploadResult.duration || null,
+            uploadedAt: new Date(),
+            uploadedBy: mongoId,
+          };
+
+          return attachment;
+        } catch (uploadError) {
+          console.error(
+            `Failed to upload file ${file.originalname}:`,
+            uploadError
+          );
+          throw uploadError;
+        }
       });
+
+      try {
+        const attachments = await Promise.all(uploadPromises);
+
+        // Validate all attachments have URLs before adding to project
+        const validAttachments = attachments.filter(
+          (attachment) => attachment.url
+        );
+
+        if (validAttachments.length !== attachments.length) {
+          throw new Error("Some attachments failed to upload properly");
+        }
+
+        project.attachments.push(...validAttachments);
+
+        // Add timeline events for each attachment
+        validAttachments.forEach((attachment) => {
+          project.timeline.push({
+            title: "Attachment Added",
+            description: `File "${attachment.filename}" was uploaded`,
+            date: new Date(),
+            type: "attachment",
+          });
+        });
+      } catch (uploadError) {
+        return res.status(500).json({
+          status: "error",
+          message: "Failed to upload one or more attachments",
+          error: uploadError.message,
+        });
+      }
     }
 
     await project.save();

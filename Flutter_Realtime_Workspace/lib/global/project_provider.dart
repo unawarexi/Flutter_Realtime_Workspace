@@ -58,7 +58,7 @@ class ProjectNotifier extends StateNotifier<ProjectState> {
         'description': data['description']?.toString().trim() ?? '',
         'key': data['key']?.toString().trim() ?? '',
         'template': data['template']?.toString() ?? 'Kanban',
-        'teamId': data['teamId']?.toString().trim() ?? '',
+        // 'teamId': data['teamId']?.toString().trim() ?? '',
         'createdBy': currentUserId,
         'status': 'active',
         'priority': 'medium',
@@ -74,9 +74,9 @@ class ProjectNotifier extends StateNotifier<ProjectState> {
       if (projectData['name'].isEmpty) {
         throw Exception('Project name is required');
       }
-      if (projectData['teamId'].isEmpty) {
-        throw Exception('Team ID is required');
-      }
+      // if (projectData['teamId'].isEmpty) {
+      //   throw Exception('Team ID is required');
+      // }
       if (projectData['key'].isEmpty) {
         throw Exception('Project key is required');
       }

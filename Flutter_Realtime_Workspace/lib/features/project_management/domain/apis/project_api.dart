@@ -5,9 +5,20 @@ import 'package:flutter_realtime_workspace/core/network/auto_retry.dart'; // <--
 
 class ProjectApi {
   // Use the retry-enabled Dio instance from NetworkModule
-  static final Dio _dio = NetworkModule.getDioWithBaseUrl(
-    '${Environment.baseUrl}projects', // Environment.baseUrl must end with /
+   static final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: '${Environment.baseUrl}projects',
+      connectTimeout: const Duration(minutes: 2), // ⏱️ 2 minutes
+      receiveTimeout: const Duration(minutes: 2),
+      sendTimeout: const Duration(minutes: 2),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    ),
   );
+  // static final Dio _dio = NetworkModule.getDioWithBaseUrl(
+  //   '${Environment.baseUrl}projects', // Environment.baseUrl must end with /
+  // );
 
   static Future<String?> _getToken() async {
     final user = FirebaseAuth.instance.currentUser;

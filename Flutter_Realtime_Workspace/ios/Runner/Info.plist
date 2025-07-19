@@ -93,6 +93,12 @@
 		<!-- Permission options for the `photos` group -->
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>photos</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>We need access to your photo library to pick images</string>
+
+		<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>We need access to save media to your photo library</string>
+
 		<!-- Permission options for the `reminder` group -->
 		<key>NSRemindersUsageDescription</key>
 		<string>reminders</string>

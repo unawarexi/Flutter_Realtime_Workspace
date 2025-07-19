@@ -1,17 +1,11 @@
 import { v2 as cloudinary } from "cloudinary";
 import * as dotenv from "dotenv";
 import multer from "multer";
-import * as fs from "fs";
-import * as path from "path";
-import { fileURLToPath } from "url";
 import { extensionToMimeType, allowedExtensions } from "../utils/extensions.js";
+import path from "path";
 
 // Load environment variables
 dotenv.config();
-
-// Get __dirname equivalent in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Configure cloudinary
 cloudinary.config({
@@ -21,55 +15,19 @@ cloudinary.config({
   secure: true,
 });
 
-// Configure multer for temporary file storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadsDir = path.join(__dirname, "../uploads");
-    // Ensure uploads directory exists
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-    cb(null, uploadsDir);
-  },
-  filename: function (req, file, cb) {
-    // Create unique filename with original extension
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + "-" + uniqueSuffix + ext);
-  },
-});
+// Configure multer for memory storage (no local files)
+const storage = multer.memoryStorage();
 
 // Enhanced file filter for all media types
 const fileFilter = (req, file, cb) => {
-  // Get file extension for validation
   const fileExtension = path.extname(file.originalname).toLowerCase();
-
-  
-
-  // Flatten all allowed extensions
   const allAllowedExtensions = Object.values(allowedExtensions).flat();
-
-  
-
   const allowedMimeTypes = Object.values(extensionToMimeType);
-
-  // Debug logging
-  console.log("File details:", {
-    originalname: file.originalname,
-    mimetype: file.mimetype,
-    extension: fileExtension,
-    size: file.size,
-  });
 
   // Check if extension is valid
   const isExtensionValid = allAllowedExtensions.includes(fileExtension);
 
   if (!isExtensionValid) {
-    console.log("File rejected - invalid extension:", {
-      mimetype: file.mimetype,
-      extension: fileExtension,
-      isExtensionValid,
-    });
     cb(
       new Error(
         `Invalid file extension: ${fileExtension}. Please upload a supported file type.`
@@ -78,28 +36,18 @@ const fileFilter = (req, file, cb) => {
     return;
   }
 
-  // Check MIME type, but allow fallback for application/octet-stream
+  // Check MIME type with fallback for application/octet-stream
   const isMimeTypeValid = allowedMimeTypes.includes(file.mimetype);
   const isGenericMimeType = file.mimetype === "application/octet-stream";
   const expectedMimeType = extensionToMimeType[fileExtension];
 
   if (isMimeTypeValid || (isGenericMimeType && expectedMimeType)) {
-    // If it's a generic MIME type but valid extension, update the MIME type
+    // Correct MIME type if it's generic but valid extension
     if (isGenericMimeType && expectedMimeType) {
-      console.log(
-        `Correcting MIME type from ${file.mimetype} to ${expectedMimeType} based on extension ${fileExtension}`
-      );
       file.mimetype = expectedMimeType;
     }
     cb(null, true);
   } else {
-    console.log("File rejected - invalid MIME type:", {
-      mimetype: file.mimetype,
-      extension: fileExtension,
-      expectedMimeType,
-      isMimeTypeValid,
-      isGenericMimeType,
-    });
     cb(
       new Error(
         `Invalid file type. Received: ${file.mimetype} (${fileExtension}). Expected: ${expectedMimeType || "valid file MIME type"}.`
@@ -108,24 +56,22 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Initialize multer upload with enhanced settings
+// Initialize multer upload with memory storage
 export const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 20 * 1024 * 1024, // 100MB limit for videos and large files
+    fileSize: 20 * 1024 * 1024, // 20MB limit
   },
 });
 
 // Multer error handler middleware
 export function multerErrorHandler(err, req, res, next) {
-  console.error("Multer error:", err);
-
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
       return res.status(400).json({
         status: "error",
-        message: "File too large. Maximum size is 100MB.",
+        message: "File too large. Maximum size is 20MB.",
       });
     }
     return res.status(400).json({
@@ -144,44 +90,44 @@ export function multerErrorHandler(err, req, res, next) {
 /**
  * Determine the resource type based on file extension
  */
-const getResourceType = (filePath) => {
-  const ext = path.extname(filePath).toLowerCase();
+const getResourceType = (filename) => {
+  const ext = filename.toLowerCase().split(".").pop();
 
   const imageExts = [
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".gif",
-    ".webp",
-    ".bmp",
-    ".tiff",
-    ".svg",
-    ".ico",
-    ".heic",
-    ".heif",
+    "jpg",
+    "jpeg",
+    "png",
+    "gif",
+    "webp",
+    "bmp",
+    "tiff",
+    "svg",
+    "ico",
+    "heic",
+    "heif",
   ];
   const videoExts = [
-    ".mp4",
-    ".avi",
-    ".mov",
-    ".wmv",
-    ".flv",
-    ".webm",
-    ".mkv",
-    ".m4v",
-    ".3gp",
-    ".ogv",
+    "mp4",
+    "avi",
+    "mov",
+    "wmv",
+    "flv",
+    "webm",
+    "mkv",
+    "m4v",
+    "3gp",
+    "ogv",
   ];
   const audioExts = [
-    ".mp3",
-    ".wav",
-    ".flac",
-    ".aac",
-    ".ogg",
-    ".wma",
-    ".m4a",
-    ".opus",
-    ".aiff",
+    "mp3",
+    "wav",
+    "flac",
+    "aac",
+    "ogg",
+    "wma",
+    "m4a",
+    "opus",
+    "aiff",
   ];
 
   if (imageExts.includes(ext)) return "image";
@@ -191,26 +137,33 @@ const getResourceType = (filePath) => {
 };
 
 /**
- * Upload any file type to Cloudinary
- * @param filePath - Path to the local file
+ * Upload file buffer directly to Cloudinary
+ * @param fileBuffer - File buffer from multer
+ * @param originalName - Original filename
  * @param folder - Cloudinary folder to upload to
- * @param originalName - Original filename for metadata
  * @returns Promise resolving to the Cloudinary upload result with metadata
  */
+
 export const uploadToCloudinary = async (
-  filePath,
-  folder = "/projects/workspace",
-  originalName = ""
+  fileBuffer,
+  originalName,
+  folder = "/projects/workspace" 
 ) => {
   try {
-    console.log("Uploading to Cloudinary:", filePath);
+    const resourceType = getResourceType(originalName);
+    const fileExtension = originalName.split(".").pop();
+    const fileName = originalName.split(".").slice(0, -1).join(".");
 
-    const resourceType = getResourceType(filePath);
-    const fileExtension = path.extname(filePath).toLowerCase();
-    const fileName = path.basename(originalName || filePath, fileExtension);
+    console.log("Upload parameters:", {
+      originalName,
+      folder,
+      resourceType,
+      fileExtension,
+      fileName
+    });
 
     const uploadOptions = {
-      folder: folder,
+      folder: folder, // This should be "projects/workspace"
       resource_type: resourceType,
       public_id: `${fileName}_${Date.now()}`,
       use_filename: true,
@@ -231,13 +184,30 @@ export const uploadToCloudinary = async (
       ];
     }
 
-    const result = await cloudinary.uploader.upload(filePath, uploadOptions);
+    console.log("Cloudinary upload options:", uploadOptions);
 
-    console.log("Cloudinary upload successful:", result.public_id);
+    // Upload buffer directly to Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(uploadOptions, (error, result) => {
+          if (error) {
+            console.error("Cloudinary upload error:", error);
+            reject(error);
+          } else {
+            console.log("Cloudinary upload success:", {
+              public_id: result.public_id,
+              secure_url: result.secure_url,
+              folder: result.folder
+            });
+            resolve(result);
+          }
+        })
+        .end(fileBuffer);
+    });
 
-    // Delete local file after upload
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    // Validate that we got a secure_url
+    if (!result.secure_url) {
+      throw new Error("Cloudinary upload succeeded but no secure_url returned");
     }
 
     // Return comprehensive file information
@@ -253,15 +223,10 @@ export const uploadToCloudinary = async (
       original_filename: result.original_filename,
       created_at: result.created_at,
       type: resourceType,
-      filename: originalName || path.basename(filePath),
+      filename: originalName,
     };
   } catch (error) {
     console.error("Cloudinary upload error:", error);
-
-    // Delete local file if upload failed
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
     throw error;
   }
 };
