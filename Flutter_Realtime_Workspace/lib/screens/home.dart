@@ -4,6 +4,7 @@ import 'package:flutter_realtime_workspace/core/services/google_geo_location.dar
 import 'package:flutter_realtime_workspace/core/utils/constants/image_strings.dart';
 import 'package:flutter_realtime_workspace/core/utils/helpers/helper_functions.dart';
 import 'package:flutter_realtime_workspace/features/authentication/presentation/widgets/options_screen.dart';
+import 'package:flutter_realtime_workspace/features/collaboration/presentation/meetings_screen.dart';
 import 'package:flutter_realtime_workspace/features/project_management/presentation/screens/create_project_screen.dart';
 import 'package:flutter_realtime_workspace/features/project_management/presentation/screens/create_task_screen.dart';
 import 'package:flutter_realtime_workspace/features/team_management/presentation/team_screen.dart';
@@ -462,12 +463,20 @@ class Home extends ConsumerWidget {
                 isDarkMode: isDarkMode,
               ),
             ),
-            _buildQuickActionCard(
-              icon: Icons.schedule_outlined,
-              title: 'Schedule Meet',
-              subtitle: 'Plan ahead',
-              color: const Color(0xFF8B5CF6),
-              isDarkMode: isDarkMode,
+            GestureDetector(
+               onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ScheduleMeet()),
+                );
+              },
+              child: _buildQuickActionCard(
+                icon: Icons.schedule_outlined,
+                title: 'Schedule Meet',
+                subtitle: 'Plan ahead',
+                color: const Color(0xFF8B5CF6),
+                isDarkMode: isDarkMode,
+              ),
             ),
             _buildQuickActionCard(
               icon: Icons.analytics_outlined,
