@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4 } from 'uuid';
 
 // Generate a project key: PROJ{uuid}KEY
 export function generateProjectKey() {

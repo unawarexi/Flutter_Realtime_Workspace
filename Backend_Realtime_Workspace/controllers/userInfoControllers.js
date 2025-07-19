@@ -1,19 +1,16 @@
 // userInfoControllers.js - Improved version with better referral handling
 
-import UserInfo from "../models/userInfoModel.js";
-import {
-  uploadToCloudinary,
-  deleteFromCloudinary,
-} from "../services/cloudinary.js";
-import { calculateProfileCompletion } from "../utils/profileCompletion.js";
+import UserInfo from '../models/userInfoModel.js';
+import { uploadToCloudinary, deleteFromCloudinary } from '../services/cloudinary.js';
+import { calculateProfileCompletion } from '../utils/profileCompletion.js';
 import {
   assignReferralCode,
   useReferralCode,
   revokeReferralCode,
   autoRegenerateExpiredCodes,
   getReferralStats,
-} from "../utils/referalCode.js";
-import admin from "firebase-admin";
+} from '../utils/referalCode.js';
+import admin from 'firebase-admin';
 
 // Utility functions (keep existing ones)
 function ensureStringArray(val) {
@@ -25,26 +22,26 @@ function ensureStringArray(val) {
 function ensureReferredToArray(val) {
   if (!val) return [];
   if (Array.isArray(val)) {
-    return val.map((v) => (typeof v === "string" ? { email: v } : v));
+    return val.map((v) => (typeof v === 'string' ? { email: v } : v));
   }
-  return [typeof val === "string" ? { email: val } : val];
+  return [typeof val === 'string' ? { email: val } : val];
 }
 
 function ensureInvitedByArray(val) {
   if (!val) return [];
   if (Array.isArray(val)) {
-    return val.map((v) => (typeof v === "string" ? { inviterCode: v } : v));
+    return val.map((v) => (typeof v === 'string' ? { inviterCode: v } : v));
   }
-  return [typeof val === "string" ? { inviterCode: val } : val];
+  return [typeof val === 'string' ? { inviterCode: val } : val];
 }
 
 // Create or update (upsert) user info for authenticated user with improved referral logic
 export const createOrUpdateMyUserInfo = async (req, res) => {
   try {
-    console.log("[createOrUpdateMyUserInfo] Called by:", req.user);
+    console.log('[createOrUpdateMyUserInfo] Called by:', req.user);
     const { email, uid } = req.user;
     const data = req.body;
-    console.log("[createOrUpdateMyUserInfo] Incoming data:", data);
+    console.log('[createOrUpdateMyUserInfo] Incoming data:', data);
 
     // Ensure arrays are properly formatted
     data.interestsSkills = ensureStringArray(data.interestsSkills);
@@ -54,46 +51,34 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
     // Handle image upload (FIXED)
     if (req.file) {
       try {
-        console.log(
-          "[createOrUpdateMyUserInfo] Image file detected:",
-          {
-            filename: req.file.originalname,
-            mimetype: req.file.mimetype,
-            size: req.file.size
-          }
-        );
-        
+        console.log('[createOrUpdateMyUserInfo] Image file detected:', {
+          filename: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+        });
+
         const existingUser = await UserInfo.findOne({ email });
-        
+
         // FIXED: Use correct parameters - buffer, originalname, folder
         const uploadResult = await uploadToCloudinary(
-          req.file.buffer,           // Use buffer, not path
-          req.file.originalname,     // Use original filename
-          "/projects/workspace"      // Folder parameter
+          req.file.buffer, // Use buffer, not path
+          req.file.originalname, // Use original filename
+          '/projects/workspace' // Folder parameter
         );
-        
-        console.log(
-          "[createOrUpdateMyUserInfo] Uploaded to Cloudinary:",
-          uploadResult
-        );
+
+        console.log('[createOrUpdateMyUserInfo] Uploaded to Cloudinary:', uploadResult);
 
         data.profilePicture = uploadResult.url;
         data.profilePicturePublicId = uploadResult.public_id;
 
         if (existingUser && existingUser.profilePicturePublicId) {
-          console.log(
-            "[createOrUpdateMyUserInfo] Deleting old Cloudinary image:",
-            existingUser.profilePicturePublicId
-          );
+          console.log('[createOrUpdateMyUserInfo] Deleting old Cloudinary image:', existingUser.profilePicturePublicId);
           await deleteFromCloudinary(existingUser.profilePicturePublicId);
         }
       } catch (uploadError) {
-        console.error(
-          "[createOrUpdateMyUserInfo] Failed to upload image:",
-          uploadError.message
-        );
+        console.error('[createOrUpdateMyUserInfo] Failed to upload image:', uploadError.message);
         return res.status(500).json({
-          message: "Failed to upload image",
+          message: 'Failed to upload image',
           error: uploadError.message,
         });
       }
@@ -119,7 +104,7 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
       { ...data, email, userID: uid },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
-    console.log("[createOrUpdateMyUserInfo] Upserted userInfo:", userInfo);
+    console.log('[createOrUpdateMyUserInfo] Upserted userInfo:', userInfo);
 
     // Always assign a referral code if user doesn't have one (ignore invitePermissions here)
     if (!userInfo.inviteCode) {
@@ -128,28 +113,19 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
         const code = await assignReferralCode(userInfo, {
           ignorePermissions: true,
         });
-        console.log(
-          "[createOrUpdateMyUserInfo] Assigned code (auto):",
-          userInfo.inviteCode
-        );
+        console.log('[createOrUpdateMyUserInfo] Assigned code (auto):', userInfo.inviteCode);
       } catch (err) {
-        console.error(
-          "[createOrUpdateMyUserInfo] Referral code assignment failed:",
-          err.message
-        );
+        console.error('[createOrUpdateMyUserInfo] Referral code assignment failed:', err.message);
         return res.status(400).json({
-          message: "Referral code assignment failed",
+          message: 'Referral code assignment failed',
           error: err.message,
         });
       }
     }
 
     // Step 2: Process referral code if provided (user joining with someone's code)
-    if (referralCodeToUse && data.permissionsLevel === "member") {
-      console.log(
-        "[createOrUpdateMyUserInfo] Processing referral code:",
-        referralCodeToUse
-      );
+    if (referralCodeToUse && data.permissionsLevel === 'member') {
+      console.log('[createOrUpdateMyUserInfo] Processing referral code:', referralCodeToUse);
 
       const result = await useReferralCode({
         memberUser: userInfo,
@@ -157,27 +133,22 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
       });
 
       if (!result.success) {
-        console.warn(
-          "[createOrUpdateMyUserInfo] Referral code processing failed:",
-          result.reason
-        );
+        console.warn('[createOrUpdateMyUserInfo] Referral code processing failed:', result.reason);
         return res.status(400).json({
-          message: "Invalid or expired referral code",
+          message: 'Invalid or expired referral code',
           reason: result.reason,
           regenerated: result.regenerated,
         });
       }
 
-      console.log(
-        "[createOrUpdateMyUserInfo] Successfully processed referral code"
-      );
+      console.log('[createOrUpdateMyUserInfo] Successfully processed referral code');
     }
 
     // Recalculate profile completion and save
     userInfo.profileCompletion = calculateProfileCompletion(userInfo);
     await userInfo.save();
 
-    console.log("[createOrUpdateMyUserInfo] Final userInfo:", {
+    console.log('[createOrUpdateMyUserInfo] Final userInfo:', {
       email: userInfo.email,
       inviteCode: userInfo.inviteCode,
       referredTo: userInfo.referredTo?.length || 0,
@@ -186,12 +157,9 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
 
     res.status(200).json(userInfo);
   } catch (err) {
-    console.error(
-      "[createOrUpdateMyUserInfo] Failed to save user info:",
-      err.message
-    );
+    console.error('[createOrUpdateMyUserInfo] Failed to save user info:', err.message);
     res.status(500).json({
-      message: "Failed to save user info",
+      message: 'Failed to save user info',
       error: err.message,
     });
   }
@@ -199,10 +167,10 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
 // Update user info with improved referral handling
 export const updateMyUserInfo = async (req, res) => {
   try {
-    console.log("[updateMyUserInfo] Called by:", req.user);
+    console.log('[updateMyUserInfo] Called by:', req.user);
     const { email, uid } = req.user;
     const data = req.body;
-    console.log("[updateMyUserInfo] Incoming data:", data);
+    console.log('[updateMyUserInfo] Incoming data:', data);
 
     // Ensure arrays are properly formatted
     data.interestsSkills = ensureStringArray(data.interestsSkills);
@@ -212,31 +180,22 @@ export const updateMyUserInfo = async (req, res) => {
     // Handle image upload (keep existing logic)
     if (req.file) {
       try {
-        console.log("[updateMyUserInfo] Image file detected:", req.file.path);
+        console.log('[updateMyUserInfo] Image file detected:', req.file.path);
         const existingUser = await UserInfo.findOne({ email });
-        const uploadResult = await uploadToCloudinary(
-          req.file.path,
-          "/projects/banking/profile-pictures"
-        );
-        console.log("[updateMyUserInfo] Uploaded to Cloudinary:", uploadResult);
+        const uploadResult = await uploadToCloudinary(req.file.path, '/projects/banking/profile-pictures');
+        console.log('[updateMyUserInfo] Uploaded to Cloudinary:', uploadResult);
 
         data.profilePicture = uploadResult.url;
         data.profilePicturePublicId = uploadResult.public_id;
 
         if (existingUser && existingUser.profilePicturePublicId) {
-          console.log(
-            "[updateMyUserInfo] Deleting old Cloudinary image:",
-            existingUser.profilePicturePublicId
-          );
+          console.log('[updateMyUserInfo] Deleting old Cloudinary image:', existingUser.profilePicturePublicId);
           await deleteFromCloudinary(existingUser.profilePicturePublicId);
         }
       } catch (uploadError) {
-        console.error(
-          "[updateMyUserInfo] Failed to upload image:",
-          uploadError.message
-        );
+        console.error('[updateMyUserInfo] Failed to upload image:', uploadError.message);
         return res.status(500).json({
-          message: "Failed to upload image",
+          message: 'Failed to upload image',
           error: uploadError.message,
         });
       }
@@ -250,54 +209,39 @@ export const updateMyUserInfo = async (req, res) => {
     const referralCodeToUse = data.inviteCode;
     delete data.inviteCode; // Remove from update data
 
-    let user = await UserInfo.findOneAndUpdate(
-      { email },
-      { $set: { ...data, userID: uid, email } },
-      { new: true }
-    );
+    let user = await UserInfo.findOneAndUpdate({ email }, { $set: { ...data, userID: uid, email } }, { new: true });
 
     if (!user) {
-      console.warn("[updateMyUserInfo] User info not found for email:", email);
-      return res.status(404).json({ message: "User info not found" });
+      console.warn('[updateMyUserInfo] User info not found for email:', email);
+      return res.status(404).json({ message: 'User info not found' });
     }
 
     // Generate referral code if user doesn't have one and has appropriate permissions
-    if (
-      ["admin", "manager", "employee", "member"].includes(
-        data.permissionsLevel
-      ) &&
-      !user.inviteCode
-    ) {
+    if (['admin', 'manager', 'employee', 'member'].includes(data.permissionsLevel) && !user.inviteCode) {
       try {
-        console.log("[updateMyUserInfo] Assigning referral code...");
+        console.log('[updateMyUserInfo] Assigning referral code...');
         await assignReferralCode(user);
       } catch (err) {
-        console.error(
-          "[updateMyUserInfo] Referral code assignment failed:",
-          err.message
-        );
+        console.error('[updateMyUserInfo] Referral code assignment failed:', err.message);
         return res.status(400).json({
-          message: "Referral code assignment failed",
+          message: 'Referral code assignment failed',
           error: err.message,
         });
       }
     }
 
     // Process referral code if provided
-    if (referralCodeToUse && data.permissionsLevel === "member") {
-      console.log("[updateMyUserInfo] Using referral code:", referralCodeToUse);
+    if (referralCodeToUse && data.permissionsLevel === 'member') {
+      console.log('[updateMyUserInfo] Using referral code:', referralCodeToUse);
       const result = await useReferralCode({
         memberUser: user,
         code: referralCodeToUse,
       });
 
       if (!result.success) {
-        console.warn(
-          "[updateMyUserInfo] Invalid or expired referral code:",
-          referralCodeToUse
-        );
+        console.warn('[updateMyUserInfo] Invalid or expired referral code:', referralCodeToUse);
         return res.status(400).json({
-          message: "Invalid or expired referral code",
+          message: 'Invalid or expired referral code',
           reason: result.reason,
           regenerated: result.regenerated,
         });
@@ -308,7 +252,7 @@ export const updateMyUserInfo = async (req, res) => {
     user.profileCompletion = calculateProfileCompletion(user);
     await user.save();
 
-    console.log("[updateMyUserInfo] Final user:", {
+    console.log('[updateMyUserInfo] Final user:', {
       email: user.email,
       inviteCode: user.inviteCode,
       referredTo: user.referredTo?.length || 0,
@@ -317,12 +261,9 @@ export const updateMyUserInfo = async (req, res) => {
 
     res.json(user);
   } catch (err) {
-    console.error(
-      "[updateMyUserInfo] Failed to update user info:",
-      err.message
-    );
+    console.error('[updateMyUserInfo] Failed to update user info:', err.message);
     res.status(500).json({
-      message: "Failed to update user info",
+      message: 'Failed to update user info',
       error: err.message,
     });
   }
@@ -331,32 +272,32 @@ export const updateMyUserInfo = async (req, res) => {
 // New endpoint: Get referral statistics for authenticated user
 export const getMyReferralStats = async (req, res) => {
   try {
-    console.log("[getMyReferralStats] Called by:", req.user);
+    console.log('[getMyReferralStats] Called by:', req.user);
     const { email } = req.user;
 
     const user = await UserInfo.findOne({ email });
     if (!user) {
-      console.warn("[getMyReferralStats] User not found for email:", email);
-      return res.status(404).json({ message: "User not found" });
+      console.warn('[getMyReferralStats] User not found for email:', email);
+      return res.status(404).json({ message: 'User not found' });
     }
 
     const stats = await getReferralStats(user._id);
     res.json(stats);
   } catch (err) {
-    console.error("[getMyReferralStats] Server error:", err.message);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error('[getMyReferralStats] Server error:', err.message);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
 // New endpoint: Get referral chain (who invited whom)
 export const getReferralChain = async (req, res) => {
   try {
-    console.log("[getReferralChain] Called by:", req.user);
+    console.log('[getReferralChain] Called by:', req.user);
     const { email } = req.user;
 
     const user = await UserInfo.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     // Build referral chain upwards (who invited this user)
@@ -366,8 +307,7 @@ export const getReferralChain = async (req, res) => {
 
       chain.push({
         email: currentUser.email,
-        name:
-          currentUser.fullName || currentUser.displayName || currentUser.email,
+        name: currentUser.fullName || currentUser.displayName || currentUser.email,
         inviteCode: currentUser.inviteCode,
         level: chain.length,
       });
@@ -395,10 +335,7 @@ export const getReferralChain = async (req, res) => {
           const subChain = await buildDownwardChain(referred.email, visited);
           chain.push({
             email: referredUser.email,
-            name:
-              referredUser.fullName ||
-              referredUser.displayName ||
-              referredUser.email,
+            name: referredUser.fullName || referredUser.displayName || referredUser.email,
             inviteCode: referredUser.inviteCode,
             children: subChain,
           });
@@ -420,8 +357,8 @@ export const getReferralChain = async (req, res) => {
       downwardChain,
     });
   } catch (err) {
-    console.error("[getReferralChain] Server error:", err.message);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error('[getReferralChain] Server error:', err.message);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
@@ -438,134 +375,98 @@ export const getUserByInviteCodeOrEmail = async (req, res) => {
     }
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     res.json(user);
   } catch (err) {
-    console.error("[getUserByInviteCodeOrEmail] Server error:", err.message);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error('[getUserByInviteCodeOrEmail] Server error:', err.message);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
 // Keep all existing endpoints unchanged
 export const revokeUserReferralCode = async (req, res) => {
   try {
-    console.log(
-      "[revokeUserReferralCode] Called by:",
-      req.user,
-      "for userId:",
-      req.params.id
-    );
+    console.log('[revokeUserReferralCode] Called by:', req.user, 'for userId:', req.params.id);
     const { id } = req.params;
     const user = await UserInfo.findById(id);
     if (!user) {
-      console.warn("[revokeUserReferralCode] User not found:", id);
-      return res.status(404).json({ message: "User not found" });
+      console.warn('[revokeUserReferralCode] User not found:', id);
+      return res.status(404).json({ message: 'User not found' });
     }
     await revokeReferralCode(user);
-    console.log("[revokeUserReferralCode] Referral code revoked for user:", id);
-    res.json({ message: "Referral code revoked" });
+    console.log('[revokeUserReferralCode] Referral code revoked for user:', id);
+    res.json({ message: 'Referral code revoked' });
   } catch (err) {
-    console.error(
-      "[revokeUserReferralCode] Failed to revoke referral code:",
-      err.message
-    );
-    res
-      .status(500)
-      .json({ message: "Failed to revoke referral code", error: err.message });
+    console.error('[revokeUserReferralCode] Failed to revoke referral code:', err.message);
+    res.status(500).json({ message: 'Failed to revoke referral code', error: err.message });
   }
 };
 
 export const deleteMyUserInfo = async (req, res) => {
   try {
-    console.log("[deleteMyUserInfo] Called by:", req.user);
+    console.log('[deleteMyUserInfo] Called by:', req.user);
     const { email, uid } = req.user;
     const user = await UserInfo.findOne({ email, userID: uid });
 
     if (!user) {
-      console.warn("[deleteMyUserInfo] User info not found for email:", email);
-      return res.status(404).json({ message: "User info not found" });
+      console.warn('[deleteMyUserInfo] User info not found for email:', email);
+      return res.status(404).json({ message: 'User info not found' });
     }
 
     if (user.profilePicturePublicId) {
       try {
-        console.log(
-          "[deleteMyUserInfo] Deleting Cloudinary image:",
-          user.profilePicturePublicId
-        );
+        console.log('[deleteMyUserInfo] Deleting Cloudinary image:', user.profilePicturePublicId);
         await deleteFromCloudinary(user.profilePicturePublicId);
       } catch (cloudinaryError) {
-        console.error(
-          "[deleteMyUserInfo] Failed to delete image from Cloudinary:",
-          cloudinaryError
-        );
+        console.error('[deleteMyUserInfo] Failed to delete image from Cloudinary:', cloudinaryError);
       }
     }
 
     await UserInfo.findOneAndDelete({ email, userID: uid });
-    console.log("[deleteMyUserInfo] User info deleted for email:", email);
+    console.log('[deleteMyUserInfo] User info deleted for email:', email);
 
     try {
       await admin.auth().deleteUser(uid);
-      console.log("[deleteMyUserInfo] Firebase user deleted:", uid);
+      console.log('[deleteMyUserInfo] Firebase user deleted:', uid);
     } catch (firebaseError) {
-      if (firebaseError.code === "auth/user-not-found") {
-        console.warn("[deleteMyUserInfo] Firebase user not found:", uid);
+      if (firebaseError.code === 'auth/user-not-found') {
+        console.warn('[deleteMyUserInfo] Firebase user not found:', uid);
       } else {
-        console.error(
-          "[deleteMyUserInfo] Failed to delete Firebase user:",
-          firebaseError.message
-        );
+        console.error('[deleteMyUserInfo] Failed to delete Firebase user:', firebaseError.message);
       }
     }
 
-    res.json({ message: "User info and Firebase user deleted" });
+    res.json({ message: 'User info and Firebase user deleted' });
   } catch (err) {
-    console.error(
-      "[deleteMyUserInfo] Failed to delete user info:",
-      err.message
-    );
-    res
-      .status(500)
-      .json({ message: "Failed to delete user info", error: err.message });
+    console.error('[deleteMyUserInfo] Failed to delete user info:', err.message);
+    res.status(500).json({ message: 'Failed to delete user info', error: err.message });
   }
 };
 
 export const uploadProfilePicture = async (req, res) => {
   try {
-    console.log("[uploadProfilePicture] Called by:", req.user);
+    console.log('[uploadProfilePicture] Called by:', req.user);
     const { email, uid } = req.user;
 
     if (!req.file) {
-      console.warn("[uploadProfilePicture] No file provided");
-      return res.status(400).json({ message: "No file provided" });
+      console.warn('[uploadProfilePicture] No file provided');
+      return res.status(400).json({ message: 'No file provided' });
     }
 
     const existingUser = await UserInfo.findOne({ email, userID: uid });
     if (!existingUser) {
-      console.warn(
-        "[uploadProfilePicture] User info not found for email:",
-        email
-      );
-      return res.status(404).json({ message: "User info not found" });
+      console.warn('[uploadProfilePicture] User info not found for email:', email);
+      return res.status(404).json({ message: 'User info not found' });
     }
 
     try {
-      const uploadResult = await uploadToCloudinary(
-        req.file.path,
-        "/projects/banking/profile-pictures"
-      );
-      console.log(
-        "[uploadProfilePicture] Uploaded to Cloudinary:",
-        uploadResult
-      );
+      const uploadResult = await uploadToCloudinary(req.file.path, '/projects/banking/profile-pictures');
+      console.log('[uploadProfilePicture] Uploaded to Cloudinary:', uploadResult);
 
       if (existingUser.profilePicturePublicId) {
-        console.log(
-          "[uploadProfilePicture] Deleting old Cloudinary image:",
-          existingUser.profilePicturePublicId
-        );
+        console.log('[uploadProfilePicture] Deleting old Cloudinary image:', existingUser.profilePicturePublicId);
         await deleteFromCloudinary(existingUser.profilePicturePublicId);
       }
 
@@ -582,117 +483,98 @@ export const uploadProfilePicture = async (req, res) => {
 
       updatedUser.profileCompletion = calculateProfileCompletion(updatedUser);
       await updatedUser.save();
-      console.log("[uploadProfilePicture] Updated user:", updatedUser);
+      console.log('[uploadProfilePicture] Updated user:', updatedUser);
 
       res.json({
-        message: "Profile picture uploaded successfully",
+        message: 'Profile picture uploaded successfully',
         profilePicture: uploadResult.url,
         user: updatedUser,
       });
     } catch (uploadError) {
-      console.error(
-        "[uploadProfilePicture] Failed to upload image:",
-        uploadError.message
-      );
+      console.error('[uploadProfilePicture] Failed to upload image:', uploadError.message);
       return res.status(500).json({
-        message: "Failed to upload image",
+        message: 'Failed to upload image',
         error: uploadError.message,
       });
     }
   } catch (err) {
-    console.error("[uploadProfilePicture] Server error:", err.message);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error('[uploadProfilePicture] Server error:', err.message);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
 export const getAllUserInfos = async (req, res) => {
   try {
-    console.log("[getAllUserInfos] Called by:", req.user);
+    console.log('[getAllUserInfos] Called by:', req.user);
     const users = await UserInfo.find();
     res.json(users);
   } catch (err) {
-    console.error("[getAllUserInfos] Server error:", err.message);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error('[getAllUserInfos] Server error:', err.message);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
 export const getMyUserInfo = async (req, res) => {
   try {
-    console.log("[getMyUserInfo] Called by:", req.user);
+    console.log('[getMyUserInfo] Called by:', req.user);
     const { email, uid } = req.user;
     const user = await UserInfo.findOne({ email, userID: uid });
     if (!user) {
-      console.warn("[getMyUserInfo] User info not found for email:", email);
-      return res.status(404).json({ message: "User info not found" });
+      console.warn('[getMyUserInfo] User info not found for email:', email);
+      return res.status(404).json({ message: 'User info not found' });
     }
     res.json(user);
   } catch (err) {
-    console.error("[getMyUserInfo] Server error:", err.message);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error('[getMyUserInfo] Server error:', err.message);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
 export const getUserInfoById = async (req, res) => {
   try {
-    console.log(
-      "[getUserInfoById] Called by:",
-      req.user,
-      "for userId:",
-      req.params.id
-    );
+    console.log('[getUserInfoById] Called by:', req.user, 'for userId:', req.params.id);
     const { id } = req.params;
     const user = await UserInfo.findById(id);
     if (!user) {
-      console.warn("[getUserInfoById] User info not found for id:", id);
-      return res.status(404).json({ message: "User info not found" });
+      console.warn('[getUserInfoById] User info not found for id:', id);
+      return res.status(404).json({ message: 'User info not found' });
     }
     res.json(user);
   } catch (err) {
-    console.error("[getUserInfoById] Server error:", err.message);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error('[getUserInfoById] Server error:', err.message);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
 export const regenerateMyInviteCode = async (req, res) => {
   try {
-    console.log("[regenerateMyInviteCode] Called by:", req.user);
+    console.log('[regenerateMyInviteCode] Called by:', req.user);
     const { email } = req.user;
     const user = await UserInfo.findOne({ email });
     if (!user) {
-      console.warn("[regenerateMyInviteCode] User not found for email:", email);
-      return res.status(404).json({ message: "User not found" });
+      console.warn('[regenerateMyInviteCode] User not found for email:', email);
+      return res.status(404).json({ message: 'User not found' });
     }
     try {
       // Only allow admin to regenerate
-      if (user.permissionsLevel !== "admin") {
-        return res
-          .status(403)
-          .json({ message: "Only admin can regenerate invite code" });
+      if (user.permissionsLevel !== 'admin') {
+        return res.status(403).json({ message: 'Only admin can regenerate invite code' });
       }
       await assignReferralCode(user); // normal permission check
-      console.log(
-        "[regenerateMyInviteCode] Invite code regenerated:",
-        user.inviteCode
-      );
+      console.log('[regenerateMyInviteCode] Invite code regenerated:', user.inviteCode);
     } catch (err) {
-      console.error(
-        "[regenerateMyInviteCode] Failed to assign referral code:",
-        err.message
-      );
+      console.error('[regenerateMyInviteCode] Failed to assign referral code:', err.message);
       return res.status(400).json({ message: err.message });
     }
     res.json({
-      message: "Invite code regenerated",
+      message: 'Invite code regenerated',
       inviteCode: user.inviteCode,
       inviteCodeExpiry: user.inviteCodeExpiry,
     });
   } catch (err) {
-    console.error(
-      "[regenerateMyInviteCode] Failed to regenerate invite code:",
-      err.message
-    );
+    console.error('[regenerateMyInviteCode] Failed to regenerate invite code:', err.message);
     res.status(500).json({
-      message: "Failed to regenerate invite code",
+      message: 'Failed to regenerate invite code',
       error: err.message,
     });
   }
@@ -700,21 +582,14 @@ export const regenerateMyInviteCode = async (req, res) => {
 
 export const updateInvitePermissions = async (req, res) => {
   try {
-    console.log(
-      "[updateInvitePermissions] Called by:",
-      req.user,
-      "for userId:",
-      req.params.id,
-      "with body:",
-      req.body
-    );
+    console.log('[updateInvitePermissions] Called by:', req.user, 'for userId:', req.params.id, 'with body:', req.body);
     const { id } = req.params;
     const { invitePermissions } = req.body;
 
     const user = await UserInfo.findById(id);
     if (!user) {
-      console.warn("[updateInvitePermissions] User not found for id:", id);
-      return res.status(404).json({ message: "User not found" });
+      console.warn('[updateInvitePermissions] User not found for id:', id);
+      return res.status(404).json({ message: 'User not found' });
     }
 
     user.invitePermissions = {
@@ -723,21 +598,15 @@ export const updateInvitePermissions = async (req, res) => {
     };
     await user.save();
 
-    console.log(
-      "[updateInvitePermissions] Updated invitePermissions:",
-      user.invitePermissions
-    );
+    console.log('[updateInvitePermissions] Updated invitePermissions:', user.invitePermissions);
     res.json({
-      message: "Invite permissions updated",
+      message: 'Invite permissions updated',
       invitePermissions: user.invitePermissions,
     });
   } catch (err) {
-    console.error(
-      "[updateInvitePermissions] Failed to update invite permissions:",
-      err.message
-    );
+    console.error('[updateInvitePermissions] Failed to update invite permissions:', err.message);
     res.status(500).json({
-      message: "Failed to update invite permissions",
+      message: 'Failed to update invite permissions',
       error: err.message,
     });
   }

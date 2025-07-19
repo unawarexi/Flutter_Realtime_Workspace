@@ -1,23 +1,21 @@
-import Team from "../models/teamModel.js";
-import Project from "../models/projectModel.js";
-import UserInfo from "../models/userInfoModel.js";
-import mongoose from "mongoose";
-
+import Team from '../models/teamModel.js';
+import Project from '../models/projectModel.js';
+import UserInfo from '../models/userInfoModel.js';
+import mongoose from 'mongoose';
 
 export const createTeam = async (req, res) => {
   try {
-    console.log("[createTeam] req.user:", req.user);
-    console.log("[createTeam] req.body:", req.body);
+    console.log('[createTeam] req.user:', req.user);
+    console.log('[createTeam] req.body:', req.body);
 
-    const { name, description, industry, size, type, settings, members } =
-      req.body;
+    const { name, description, industry, size, type, settings, members } = req.body;
 
     // Get the correct user ID from the auth middleware
     const firebaseUid = req.user.uid; // Firebase UID
     const mongoId = req.user.mongoId; // MongoDB ObjectID
 
-    console.log("[createTeam] Firebase UID:", firebaseUid);
-    console.log("[createTeam] MongoDB ID:", mongoId);
+    console.log('[createTeam] Firebase UID:', firebaseUid);
+    console.log('[createTeam] MongoDB ID:', mongoId);
 
     // Use the userRecord from middleware or find the user
     let user = req.user.userRecord;
@@ -33,7 +31,7 @@ export const createTeam = async (req, res) => {
     }
 
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: 'User not found' });
     }
 
     // Create team with owner as first member
@@ -49,7 +47,7 @@ export const createTeam = async (req, res) => {
       members: [
         {
           userId: mongoId, // Use MongoDB ObjectID for consistency
-          role: "owner",
+          role: 'owner',
           permissions: {
             canCreateProjects: true,
             canDeleteProjects: true,
@@ -60,7 +58,7 @@ export const createTeam = async (req, res) => {
             canExportData: true,
             canManageIntegrations: true,
           },
-          status: "active",
+          status: 'active',
         },
       ],
     });
@@ -70,7 +68,7 @@ export const createTeam = async (req, res) => {
       for (const m of members) {
         // Skip if userId is missing or null
         if (!m.userId) {
-          console.log("[createTeam] Skipping member with missing userId:", m);
+          console.log('[createTeam] Skipping member with missing userId:', m);
           continue;
         }
 
@@ -80,26 +78,22 @@ export const createTeam = async (req, res) => {
 
         // Skip if userId is owner
         if (memberUserId === ownerUserId) {
-          console.log("[createTeam] Skipping owner in members array");
+          console.log('[createTeam] Skipping owner in members array');
           continue;
         }
 
         // Avoid duplicates
-        if (
-          team.members.some(
-            (mem) => mem.userId && mem.userId.toString() === memberUserId
-          )
-        ) {
-          console.log("[createTeam] Skipping duplicate member:", memberUserId);
+        if (team.members.some((mem) => mem.userId && mem.userId.toString() === memberUserId)) {
+          console.log('[createTeam] Skipping duplicate member:', memberUserId);
           continue;
         }
 
         // Set role/status or use defaults
         team.members.push({
           userId: m.userId,
-          role: m.role || "member",
-          permissions: team.getDefaultPermissions(m.role || "member"),
-          status: m.status || "active",
+          role: m.role || 'member',
+          permissions: team.getDefaultPermissions(m.role || 'member'),
+          status: m.status || 'active',
           joinedAt: new Date(),
         });
       }
@@ -108,55 +102,53 @@ export const createTeam = async (req, res) => {
     await team.save();
 
     // Add initial activity
-    team.addActivity("team_created", mongoId, null, "Team created");
+    team.addActivity('team_created', mongoId, null, 'Team created');
     await team.save();
 
     const populatedTeam = await Team.findById(team._id)
-      .populate("members.userId", "fullName email profilePicture")
-      .populate("createdBy", "fullName email");
+      .populate('members.userId', 'fullName email profilePicture')
+      .populate('createdBy', 'fullName email');
 
     res.status(201).json({
       success: true,
-      message: "Team created successfully",
+      message: 'Team created successfully',
       data: populatedTeam,
     });
 
-    console.log("[createTeam] REACHED END, sent 201 response");
+    console.log('[createTeam] REACHED END, sent 201 response');
   } catch (error) {
-    console.log("[createTeam][ERROR]", error);
+    console.log('[createTeam][ERROR]', error);
     res.status(500).json({
-      error: "Failed to create team",
+      error: 'Failed to create team',
       details: error.message,
     });
-    console.log("[createTeam] SENT 500 response");
+    console.log('[createTeam] SENT 500 response');
   }
 };
 
-
-
 export const getUserTeams = async (req, res) => {
   try {
-    console.log("[getUserTeams] req.user:", req.user);
-    console.log("[getUserTeams] req.query:", req.query);
+    console.log('[getUserTeams] req.user:', req.user);
+    console.log('[getUserTeams] req.query:', req.query);
     const userId = req.user.id;
-    const { status = "active", limit = 20, page = 1 } = req.query;
+    const { status = 'active', limit = 20, page = 1 } = req.query;
 
     const skip = (page - 1) * limit;
 
     const teams = await Team.find({
-      "members.userId": userId,
-      "members.status": "active",
+      'members.userId': userId,
+      'members.status': 'active',
       status,
     })
-      .populate("members.userId", "fullName email profilePicture roleTitle")
-      .populate("createdBy", "fullName email")
+      .populate('members.userId', 'fullName email profilePicture roleTitle')
+      .populate('createdBy', 'fullName email')
       .sort({ updatedAt: -1 })
       .limit(parseInt(limit))
       .skip(skip);
 
     const total = await Team.countDocuments({
-      "members.userId": userId,
-      "members.status": "active",
+      'members.userId': userId,
+      'members.status': 'active',
       status,
     });
 
@@ -171,9 +163,9 @@ export const getUserTeams = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("[getUserTeams][ERROR]", error);
+    console.error('[getUserTeams][ERROR]', error);
     res.status(500).json({
-      error: "Failed to fetch teams",
+      error: 'Failed to fetch teams',
       details: error.message,
     });
   }
@@ -181,8 +173,8 @@ export const getUserTeams = async (req, res) => {
 
 export const getTeam = async (req, res) => {
   try {
-    console.log("[getTeam] req.user:", req.user);
-    console.log("[getTeam] req.params:", req.params);
+    console.log('[getTeam] req.user:', req.user);
+    console.log('[getTeam] req.params:', req.params);
     const { identifier } = req.params; // can be ID or slug
     const userId = req.user.id;
 
@@ -194,29 +186,23 @@ export const getTeam = async (req, res) => {
     }
 
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     // Check if user is a member
-    const isMember = team.members.some(
-      (member) =>
-        member.userId.toString() === userId && member.status === "active"
-    );
+    const isMember = team.members.some((member) => member.userId.toString() === userId && member.status === 'active');
 
     if (!isMember && !team.settings.isPublic) {
-      return res.status(403).json({ error: "Access denied" });
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     const populatedTeam = await Team.findById(team._id)
-      .populate(
-        "members.userId",
-        "fullName email profilePicture roleTitle lastActive"
-      )
-      .populate("createdBy", "fullName email")
-      .populate("invites.invitedBy", "fullName email")
+      .populate('members.userId', 'fullName email profilePicture roleTitle lastActive')
+      .populate('createdBy', 'fullName email')
+      .populate('invites.invitedBy', 'fullName email')
       .populate({
-        path: "projects",
-        select: "name description status priority progress createdAt",
+        path: 'projects',
+        select: 'name description status priority progress createdAt',
         match: { archived: false },
       });
 
@@ -225,9 +211,9 @@ export const getTeam = async (req, res) => {
       data: populatedTeam,
     });
   } catch (error) {
-    console.error("[getTeam][ERROR]", error);
+    console.error('[getTeam][ERROR]', error);
     res.status(500).json({
-      error: "Failed to fetch team",
+      error: 'Failed to fetch team',
       details: error.message,
     });
   }
@@ -235,38 +221,27 @@ export const getTeam = async (req, res) => {
 
 export const updateTeam = async (req, res) => {
   try {
-    console.log("[updateTeam] req.user:", req.user);
-    console.log("[updateTeam] req.params:", req.params);
-    console.log("[updateTeam] req.body:", req.body);
+    console.log('[updateTeam] req.user:', req.user);
+    console.log('[updateTeam] req.params:', req.params);
+    console.log('[updateTeam] req.body:', req.body);
     const { teamId } = req.params;
     const userId = req.user.id;
     const updates = req.body;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     // Check permissions
-    const member = team.members.find(
-      (m) => m.userId.toString() === userId && m.status === "active"
-    );
+    const member = team.members.find((m) => m.userId.toString() === userId && m.status === 'active');
 
     if (!member || !member.permissions.canChangeSettings) {
-      return res.status(403).json({ error: "Insufficient permissions" });
+      return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
     // Update allowed fields
-    const allowedUpdates = [
-      "name",
-      "description",
-      "industry",
-      "size",
-      "type",
-      "avatar",
-      "settings",
-      "memberLimit",
-    ];
+    const allowedUpdates = ['name', 'description', 'industry', 'size', 'type', 'avatar', 'settings', 'memberLimit'];
 
     allowedUpdates.forEach((field) => {
       if (updates[field] !== undefined) {
@@ -277,23 +252,20 @@ export const updateTeam = async (req, res) => {
     await team.save();
 
     // Add activity
-    team.addActivity("team_updated", userId, null, "Team settings updated");
+    team.addActivity('team_updated', userId, null, 'Team settings updated');
     await team.save();
 
-    const updatedTeam = await Team.findById(teamId).populate(
-      "members.userId",
-      "fullName email profilePicture"
-    );
+    const updatedTeam = await Team.findById(teamId).populate('members.userId', 'fullName email profilePicture');
 
     res.json({
       success: true,
-      message: "Team updated successfully",
+      message: 'Team updated successfully',
       data: updatedTeam,
     });
   } catch (error) {
-    console.error("[updateTeam][ERROR]", error);
+    console.error('[updateTeam][ERROR]', error);
     res.status(500).json({
-      error: "Failed to update team",
+      error: 'Failed to update team',
       details: error.message,
     });
   }
@@ -301,24 +273,22 @@ export const updateTeam = async (req, res) => {
 
 export const deleteTeam = async (req, res) => {
   try {
-    console.log("[deleteTeam] req.user:", req.user);
-    console.log("[deleteTeam] req.params:", req.params);
+    console.log('[deleteTeam] req.user:', req.user);
+    console.log('[deleteTeam] req.params:', req.params);
     const { teamId } = req.params;
     const userId = req.user.id;
     const { permanent = false } = req.query;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     // Only owner can delete team
-    const member = team.members.find(
-      (m) => m.userId.toString() === userId && m.role === "owner"
-    );
+    const member = team.members.find((m) => m.userId.toString() === userId && m.role === 'owner');
 
     if (!member) {
-      return res.status(403).json({ error: "Only team owner can delete team" });
+      return res.status(403).json({ error: 'Only team owner can delete team' });
     }
 
     if (permanent) {
@@ -327,7 +297,7 @@ export const deleteTeam = async (req, res) => {
       await Team.findByIdAndDelete(teamId);
     } else {
       // Archive team
-      team.status = "archived";
+      team.status = 'archived';
       team.archived = true;
       team.archivedAt = new Date();
       team.archivedBy = userId;
@@ -338,7 +308,7 @@ export const deleteTeam = async (req, res) => {
         { teamId },
         {
           archived: true,
-          status: "archived",
+          status: 'archived',
           archivedAt: new Date(),
         }
       );
@@ -346,14 +316,12 @@ export const deleteTeam = async (req, res) => {
 
     res.json({
       success: true,
-      message: permanent
-        ? "Team deleted permanently"
-        : "Team archived successfully",
+      message: permanent ? 'Team deleted permanently' : 'Team archived successfully',
     });
   } catch (error) {
-    console.error("[deleteTeam][ERROR]", error);
+    console.error('[deleteTeam][ERROR]', error);
     res.status(500).json({
-      error: "Failed to delete team",
+      error: 'Failed to delete team',
       details: error.message,
     });
   }
@@ -363,35 +331,31 @@ export const deleteTeam = async (req, res) => {
 
 export const inviteMember = async (req, res) => {
   try {
-    console.log("[inviteMember] req.user:", req.user);
-    console.log("[inviteMember] req.params:", req.params);
-    console.log("[inviteMember] req.body:", req.body);
+    console.log('[inviteMember] req.user:', req.user);
+    console.log('[inviteMember] req.params:', req.params);
+    console.log('[inviteMember] req.body:', req.body);
     const { teamId } = req.params;
-    const { email, role = "member", message = "" } = req.body;
+    const { email, role = 'member', message = '' } = req.body;
     const userId = req.user.id;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     // Check permissions
-    const member = team.members.find(
-      (m) => m.userId.toString() === userId && m.status === "active"
-    );
+    const member = team.members.find((m) => m.userId.toString() === userId && m.status === 'active');
 
     if (!member || !member.permissions.canInviteMembers) {
-      return res.status(403).json({ error: "Insufficient permissions" });
+      return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
     // Check if user is already a member
     const existingUser = await UserInfo.findOne({ email });
     if (existingUser) {
-      const isAlreadyMember = team.members.some(
-        (m) => m.userId.toString() === existingUser._id.toString()
-      );
+      const isAlreadyMember = team.members.some((m) => m.userId.toString() === existingUser._id.toString());
       if (isAlreadyMember) {
-        return res.status(400).json({ error: "User is already a team member" });
+        return res.status(400).json({ error: 'User is already a team member' });
       }
     }
 
@@ -401,12 +365,12 @@ export const inviteMember = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Invitation sent successfully",
+      message: 'Invitation sent successfully',
     });
   } catch (error) {
-    console.error("[inviteMember][ERROR]", error);
+    console.error('[inviteMember][ERROR]', error);
     res.status(500).json({
-      error: "Failed to invite member",
+      error: 'Failed to invite member',
       details: error.message,
     });
   }
@@ -414,32 +378,29 @@ export const inviteMember = async (req, res) => {
 
 export const acceptInvitation = async (req, res) => {
   try {
-    console.log("[acceptInvitation] req.user:", req.user);
-    console.log("[acceptInvitation] req.params:", req.params);
+    console.log('[acceptInvitation] req.user:', req.user);
+    console.log('[acceptInvitation] req.params:', req.params);
     const { token } = req.params;
     const userId = req.user.id;
 
-    const team = await Team.findOne({ "invites.token": token });
+    const team = await Team.findOne({ 'invites.token': token });
     if (!team) {
-      return res.status(404).json({ error: "Invalid invitation" });
+      return res.status(404).json({ error: 'Invalid invitation' });
     }
 
     await team.acceptInvite(token, userId);
 
-    const updatedTeam = await Team.findById(team._id).populate(
-      "members.userId",
-      "fullName email profilePicture"
-    );
+    const updatedTeam = await Team.findById(team._id).populate('members.userId', 'fullName email profilePicture');
 
     res.json({
       success: true,
-      message: "Invitation accepted successfully",
+      message: 'Invitation accepted successfully',
       data: updatedTeam,
     });
   } catch (error) {
-    console.error("[acceptInvitation][ERROR]", error);
+    console.error('[acceptInvitation][ERROR]', error);
     res.status(500).json({
-      error: "Failed to accept invitation",
+      error: 'Failed to accept invitation',
       details: error.message,
     });
   }
@@ -447,37 +408,35 @@ export const acceptInvitation = async (req, res) => {
 
 export const updateMemberRole = async (req, res) => {
   try {
-    console.log("[updateMemberRole] req.user:", req.user);
-    console.log("[updateMemberRole] req.params:", req.params);
-    console.log("[updateMemberRole] req.body:", req.body);
+    console.log('[updateMemberRole] req.user:', req.user);
+    console.log('[updateMemberRole] req.params:', req.params);
+    console.log('[updateMemberRole] req.body:', req.body);
     const { teamId, memberId } = req.params;
     const { role } = req.body;
     const userId = req.user.id;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     // Check permissions
-    const currentMember = team.members.find(
-      (m) => m.userId.toString() === userId && m.status === "active"
-    );
+    const currentMember = team.members.find((m) => m.userId.toString() === userId && m.status === 'active');
 
     if (!currentMember || !currentMember.permissions.canManageMembers) {
-      return res.status(403).json({ error: "Insufficient permissions" });
+      return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
     await team.updateMemberRole(memberId, role, userId);
 
     res.json({
       success: true,
-      message: "Member role updated successfully",
+      message: 'Member role updated successfully',
     });
   } catch (error) {
-    console.error("[updateMemberRole][ERROR]", error);
+    console.error('[updateMemberRole][ERROR]', error);
     res.status(500).json({
-      error: "Failed to update member role",
+      error: 'Failed to update member role',
       details: error.message,
     });
   }
@@ -485,35 +444,33 @@ export const updateMemberRole = async (req, res) => {
 
 export const removeMember = async (req, res) => {
   try {
-    console.log("[removeMember] req.user:", req.user);
-    console.log("[removeMember] req.params:", req.params);
+    console.log('[removeMember] req.user:', req.user);
+    console.log('[removeMember] req.params:', req.params);
     const { teamId, memberId } = req.params;
     const userId = req.user.id;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     // Check permissions
-    const currentMember = team.members.find(
-      (m) => m.userId.toString() === userId && m.status === "active"
-    );
+    const currentMember = team.members.find((m) => m.userId.toString() === userId && m.status === 'active');
 
     if (!currentMember || !currentMember.permissions.canManageMembers) {
-      return res.status(403).json({ error: "Insufficient permissions" });
+      return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
     await team.removeMember(memberId, userId);
 
     res.json({
       success: true,
-      message: "Member removed successfully",
+      message: 'Member removed successfully',
     });
   } catch (error) {
-    console.error("[removeMember][ERROR]", error);
+    console.error('[removeMember][ERROR]', error);
     res.status(500).json({
-      error: "Failed to remove member",
+      error: 'Failed to remove member',
       details: error.message,
     });
   }
@@ -521,29 +478,25 @@ export const removeMember = async (req, res) => {
 
 export const leaveTeam = async (req, res) => {
   try {
-    console.log("[leaveTeam] req.user:", req.user);
-    console.log("[leaveTeam] req.params:", req.params);
+    console.log('[leaveTeam] req.user:', req.user);
+    console.log('[leaveTeam] req.params:', req.params);
     const { teamId } = req.params;
     const userId = req.user.id;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
-    const member = team.members.find(
-      (m) => m.userId.toString() === userId && m.status === "active"
-    );
+    const member = team.members.find((m) => m.userId.toString() === userId && m.status === 'active');
 
     if (!member) {
-      return res
-        .status(404)
-        .json({ error: "You are not a member of this team" });
+      return res.status(404).json({ error: 'You are not a member of this team' });
     }
 
-    if (member.role === "owner") {
+    if (member.role === 'owner') {
       return res.status(400).json({
-        error: "Team owner cannot leave. Transfer ownership first.",
+        error: 'Team owner cannot leave. Transfer ownership first.',
       });
     }
 
@@ -551,12 +504,12 @@ export const leaveTeam = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Successfully left the team",
+      message: 'Successfully left the team',
     });
   } catch (error) {
-    console.error("[leaveTeam][ERROR]", error);
+    console.error('[leaveTeam][ERROR]', error);
     res.status(500).json({
-      error: "Failed to leave team",
+      error: 'Failed to leave team',
       details: error.message,
     });
   }
@@ -564,66 +517,53 @@ export const leaveTeam = async (req, res) => {
 
 export const transferOwnership = async (req, res) => {
   try {
-    console.log("[transferOwnership] req.user:", req.user);
-    console.log("[transferOwnership] req.params:", req.params);
-    console.log("[transferOwnership] req.body:", req.body);
+    console.log('[transferOwnership] req.user:', req.user);
+    console.log('[transferOwnership] req.params:', req.params);
+    console.log('[transferOwnership] req.body:', req.body);
     const { teamId } = req.params;
     const { newOwnerId } = req.body;
     const userId = req.user.id;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     // Check if current user is owner
-    const currentOwner = team.members.find(
-      (m) => m.userId.toString() === userId && m.role === "owner"
-    );
+    const currentOwner = team.members.find((m) => m.userId.toString() === userId && m.role === 'owner');
 
     if (!currentOwner) {
-      return res
-        .status(403)
-        .json({ error: "Only team owner can transfer ownership" });
+      return res.status(403).json({ error: 'Only team owner can transfer ownership' });
     }
 
     // Check if new owner is a member
-    const newOwner = team.members.find(
-      (m) => m.userId.toString() === newOwnerId && m.status === "active"
-    );
+    const newOwner = team.members.find((m) => m.userId.toString() === newOwnerId && m.status === 'active');
 
     if (!newOwner) {
-      return res
-        .status(404)
-        .json({ error: "New owner must be an active team member" });
+      return res.status(404).json({ error: 'New owner must be an active team member' });
     }
 
     // Transfer ownership
-    currentOwner.role = "admin";
-    currentOwner.permissions = team.getDefaultPermissions("admin");
+    currentOwner.role = 'admin';
+    currentOwner.permissions = team.getDefaultPermissions('admin');
 
-    newOwner.role = "owner";
-    newOwner.permissions = team.getDefaultPermissions("owner");
+    newOwner.role = 'owner';
+    newOwner.permissions = team.getDefaultPermissions('owner');
 
     await team.save();
 
     // Add activity
-    team.addActivity(
-      "member_role_changed",
-      userId,
-      newOwnerId,
-      "Team ownership transferred"
-    );
+    team.addActivity('member_role_changed', userId, newOwnerId, 'Team ownership transferred');
     await team.save();
 
     res.json({
       success: true,
-      message: "Ownership transferred successfully",
+      message: 'Ownership transferred successfully',
     });
   } catch (error) {
-    console.error("[transferOwnership][ERROR]", error);
+    console.error('[transferOwnership][ERROR]', error);
     res.status(500).json({
-      error: "Failed to transfer ownership",
+      error: 'Failed to transfer ownership',
       details: error.message,
     });
   }
@@ -633,9 +573,9 @@ export const transferOwnership = async (req, res) => {
 
 export const getTeamProjects = async (req, res) => {
   try {
-    console.log("[getTeamProjects] req.user:", req.user);
-    console.log("[getTeamProjects] req.params:", req.params);
-    console.log("[getTeamProjects] req.query:", req.query);
+    console.log('[getTeamProjects] req.user:', req.user);
+    console.log('[getTeamProjects] req.params:', req.params);
+    console.log('[getTeamProjects] req.query:', req.query);
     const { teamId } = req.params;
     const userId = req.user.id;
     const {
@@ -644,35 +584,33 @@ export const getTeamProjects = async (req, res) => {
       archived = false,
       limit = 20,
       page = 1,
-      sortBy = "updatedAt",
-      sortOrder = "desc",
+      sortBy = 'updatedAt',
+      sortOrder = 'desc',
     } = req.query;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     // Check if user is a member
-    const member = team.members.find(
-      (m) => m.userId.toString() === userId && m.status === "active"
-    );
+    const member = team.members.find((m) => m.userId.toString() === userId && m.status === 'active');
 
     if (!member) {
-      return res.status(403).json({ error: "Access denied" });
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     // Build query
-    const query = { teamId, archived: archived === "true" };
+    const query = { teamId, archived: archived === 'true' };
     if (status) query.status = status;
     if (priority) query.priority = priority;
 
     const skip = (page - 1) * limit;
-    const sort = { [sortBy]: sortOrder === "desc" ? -1 : 1 };
+    const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
     const projects = await Project.find(query)
-      .populate("createdBy", "fullName email profilePicture")
-      .populate("members", "fullName email profilePicture")
+      .populate('createdBy', 'fullName email profilePicture')
+      .populate('members', 'fullName email profilePicture')
       .sort(sort)
       .limit(parseInt(limit))
       .skip(skip);
@@ -690,9 +628,9 @@ export const getTeamProjects = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("[getTeamProjects][ERROR]", error);
+    console.error('[getTeamProjects][ERROR]', error);
     res.status(500).json({
-      error: "Failed to fetch team projects",
+      error: 'Failed to fetch team projects',
       details: error.message,
     });
   }
@@ -700,37 +638,33 @@ export const getTeamProjects = async (req, res) => {
 
 export const assignProject = async (req, res) => {
   try {
-    console.log("[assignProject] req.user:", req.user);
-    console.log("[assignProject] req.params:", req.params);
-    console.log("[assignProject] req.body:", req.body);
+    console.log('[assignProject] req.user:', req.user);
+    console.log('[assignProject] req.params:', req.params);
+    console.log('[assignProject] req.body:', req.body);
     const { teamId, projectId } = req.params;
     const { memberIds } = req.body;
     const userId = req.user.id;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     const project = await Project.findById(projectId);
     if (!project) {
-      return res.status(404).json({ error: "Project not found" });
+      return res.status(404).json({ error: 'Project not found' });
     }
 
     // Check permissions
-    const member = team.members.find(
-      (m) => m.userId.toString() === userId && m.status === "active"
-    );
+    const member = team.members.find((m) => m.userId.toString() === userId && m.status === 'active');
 
     if (!member || !member.permissions.canViewAllProjects) {
-      return res.status(403).json({ error: "Insufficient permissions" });
+      return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
     // Validate member IDs
     const validMembers = memberIds.filter((id) =>
-      team.members.some(
-        (m) => m.userId.toString() === id && m.status === "active"
-      )
+      team.members.some((m) => m.userId.toString() === id && m.status === 'active')
     );
 
     project.members = [...new Set([...project.members, ...validMembers])];
@@ -738,19 +672,19 @@ export const assignProject = async (req, res) => {
 
     // Add timeline event
     await project.addTimelineEvent(
-      "Members Assigned",
+      'Members Assigned',
       `${validMembers.length} members assigned to project`,
-      "collaborators"
+      'collaborators'
     );
 
     res.json({
       success: true,
-      message: "Project assigned successfully",
+      message: 'Project assigned successfully',
     });
   } catch (error) {
-    console.error("[assignProject][ERROR]", error);
+    console.error('[assignProject][ERROR]', error);
     res.status(500).json({
-      error: "Failed to assign project",
+      error: 'Failed to assign project',
       details: error.message,
     });
   }
@@ -760,25 +694,23 @@ export const assignProject = async (req, res) => {
 
 export const getTeamAnalytics = async (req, res) => {
   try {
-    console.log("[getTeamAnalytics] req.user:", req.user);
-    console.log("[getTeamAnalytics] req.params:", req.params);
-    console.log("[getTeamAnalytics] req.query:", req.query);
+    console.log('[getTeamAnalytics] req.user:', req.user);
+    console.log('[getTeamAnalytics] req.params:', req.params);
+    console.log('[getTeamAnalytics] req.query:', req.query);
     const { teamId } = req.params;
     const userId = req.user.id;
-    const { period = "30d" } = req.query;
+    const { period = '30d' } = req.query;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     // Check permissions
-    const member = team.members.find(
-      (m) => m.userId.toString() === userId && m.status === "active"
-    );
+    const member = team.members.find((m) => m.userId.toString() === userId && m.status === 'active');
 
     if (!member) {
-      return res.status(403).json({ error: "Access denied" });
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     // Calculate date range
@@ -786,16 +718,16 @@ export const getTeamAnalytics = async (req, res) => {
     const startDate = new Date();
 
     switch (period) {
-      case "7d":
+      case '7d':
         startDate.setDate(startDate.getDate() - 7);
         break;
-      case "30d":
+      case '30d':
         startDate.setDate(startDate.getDate() - 30);
         break;
-      case "90d":
+      case '90d':
         startDate.setDate(startDate.getDate() - 90);
         break;
-      case "1y":
+      case '1y':
         startDate.setFullYear(startDate.getFullYear() - 1);
         break;
       default:
@@ -813,16 +745,16 @@ export const getTeamAnalytics = async (req, res) => {
           _id: null,
           totalProjects: { $sum: 1 },
           activeProjects: {
-            $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] },
           },
           completedProjects: {
-            $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] },
           },
           onHoldProjects: {
-            $sum: { $cond: [{ $eq: ["$status", "on-hold"] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ['$status', 'on-hold'] }, 1, 0] },
           },
-          averageProgress: { $avg: "$progress" },
-          totalAttachments: { $sum: { $size: "$attachments" } },
+          averageProgress: { $avg: '$progress' },
+          totalAttachments: { $sum: { $size: '$attachments' } },
         },
       },
     ]);
@@ -830,11 +762,11 @@ export const getTeamAnalytics = async (req, res) => {
     // Get member activity
     const memberActivity = await Team.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(teamId) } },
-      { $unwind: "$members" },
+      { $unwind: '$members' },
       {
         $match: {
-          "members.status": "active",
-          "members.lastActive": { $gte: startDate },
+          'members.status': 'active',
+          'members.lastActive': { $gte: startDate },
         },
       },
       {
@@ -847,9 +779,7 @@ export const getTeamAnalytics = async (req, res) => {
     ]);
 
     // Get recent activities
-    const recentActivities = team.activities
-      .filter((activity) => activity.timestamp >= startDate)
-      .slice(0, 10);
+    const recentActivities = team.activities.filter((activity) => activity.timestamp >= startDate).slice(0, 10);
 
     res.json({
       success: true,
@@ -866,9 +796,9 @@ export const getTeamAnalytics = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("[getTeamAnalytics][ERROR]", error);
+    console.error('[getTeamAnalytics][ERROR]', error);
     res.status(500).json({
-      error: "Failed to fetch team analytics",
+      error: 'Failed to fetch team analytics',
       details: error.message,
     });
   }
@@ -876,25 +806,23 @@ export const getTeamAnalytics = async (req, res) => {
 
 export const getActivityFeed = async (req, res) => {
   try {
-    console.log("[getActivityFeed] req.user:", req.user);
-    console.log("[getActivityFeed] req.params:", req.params);
-    console.log("[getActivityFeed] req.query:", req.query);
+    console.log('[getActivityFeed] req.user:', req.user);
+    console.log('[getActivityFeed] req.params:', req.params);
+    console.log('[getActivityFeed] req.query:', req.query);
     const { teamId } = req.params;
     const userId = req.user.id;
     const { limit = 20, page = 1, type } = req.query;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     // Check permissions
-    const member = team.members.find(
-      (m) => m.userId.toString() === userId && m.status === "active"
-    );
+    const member = team.members.find((m) => m.userId.toString() === userId && m.status === 'active');
 
     if (!member) {
-      return res.status(403).json({ error: "Access denied" });
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     let activities = team.activities;
@@ -910,8 +838,8 @@ export const getActivityFeed = async (req, res) => {
 
     // Populate user data for activities
     const populatedActivities = await Team.populate(paginatedActivities, [
-      { path: "actor", select: "fullName email profilePicture" },
-      { path: "target", select: "fullName email profilePicture" },
+      { path: 'actor', select: 'fullName email profilePicture' },
+      { path: 'target', select: 'fullName email profilePicture' },
     ]);
 
     res.json({
@@ -925,9 +853,9 @@ export const getActivityFeed = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("[getActivityFeed][ERROR]", error);
+    console.error('[getActivityFeed][ERROR]', error);
     res.status(500).json({
-      error: "Failed to fetch activity feed",
+      error: 'Failed to fetch activity feed',
       details: error.message,
     });
   }
@@ -937,42 +865,38 @@ export const getActivityFeed = async (req, res) => {
 
 export const searchTeams = async (req, res) => {
   try {
-    console.log("[searchTeams] req.user:", req.user);
-    console.log("[searchTeams] req.query:", req.query);
+    console.log('[searchTeams] req.user:', req.user);
+    console.log('[searchTeams] req.query:', req.query);
     const { q, limit = 10, includePublic = false } = req.query;
     const userId = req.user.id;
 
     if (!q || q.trim().length < 2) {
-      return res
-        .status(400)
-        .json({ error: "Search query must be at least 2 characters" });
+      return res.status(400).json({ error: 'Search query must be at least 2 characters' });
     }
 
     const searchQuery = {
       $and: [
         {
           $or: [
-            { name: { $regex: q, $options: "i" } },
-            { description: { $regex: q, $options: "i" } },
-            { industry: { $regex: q, $options: "i" } },
+            { name: { $regex: q, $options: 'i' } },
+            { description: { $regex: q, $options: 'i' } },
+            { industry: { $regex: q, $options: 'i' } },
           ],
         },
         {
           $or: [
-            { "members.userId": userId }, // User's teams
-            ...(includePublic === "true"
-              ? [{ "settings.isPublic": true }]
-              : []),
+            { 'members.userId': userId }, // User's teams
+            ...(includePublic === 'true' ? [{ 'settings.isPublic': true }] : []),
           ],
         },
-        { status: "active" },
+        { status: 'active' },
       ],
     };
 
     const teams = await Team.find(searchQuery)
-      .populate("members.userId", "fullName email profilePicture")
-      .populate("createdBy", "fullName email")
-      .select("-activities -invites") // Exclude sensitive data
+      .populate('members.userId', 'fullName email profilePicture')
+      .populate('createdBy', 'fullName email')
+      .select('-activities -invites') // Exclude sensitive data
       .limit(parseInt(limit))
       .sort({ updatedAt: -1 });
 
@@ -982,9 +906,9 @@ export const searchTeams = async (req, res) => {
       count: teams.length,
     });
   } catch (error) {
-    console.error("[searchTeams][ERROR]", error);
+    console.error('[searchTeams][ERROR]', error);
     res.status(500).json({
-      error: "Failed to search teams",
+      error: 'Failed to search teams',
       details: error.message,
     });
   }
@@ -994,25 +918,23 @@ export const searchTeams = async (req, res) => {
 
 export const updateIntegrations = async (req, res) => {
   try {
-    console.log("[updateIntegrations] req.user:", req.user);
-    console.log("[updateIntegrations] req.params:", req.params);
-    console.log("[updateIntegrations] req.body:", req.body);
+    console.log('[updateIntegrations] req.user:', req.user);
+    console.log('[updateIntegrations] req.params:', req.params);
+    console.log('[updateIntegrations] req.body:', req.body);
     const { teamId } = req.params;
     const { integrations } = req.body;
     const userId = req.user.id;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     // Check permissions
-    const member = team.members.find(
-      (m) => m.userId.toString() === userId && m.status === "active"
-    );
+    const member = team.members.find((m) => m.userId.toString() === userId && m.status === 'active');
 
     if (!member || !member.permissions.canManageIntegrations) {
-      return res.status(403).json({ error: "Insufficient permissions" });
+      return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
     // Update integrations
@@ -1020,23 +942,18 @@ export const updateIntegrations = async (req, res) => {
     await team.save();
 
     // Add activity
-    team.addActivity(
-      "settings_changed",
-      userId,
-      null,
-      "Team integrations updated"
-    );
+    team.addActivity('settings_changed', userId, null, 'Team integrations updated');
     await team.save();
 
     res.json({
       success: true,
-      message: "Integrations updated successfully",
+      message: 'Integrations updated successfully',
       data: team.integrations,
     });
   } catch (error) {
-    console.log("[updateIntegrations][ERROR]", error);
+    console.log('[updateIntegrations][ERROR]', error);
     res.status(500).json({
-      error: "Failed to update integrations",
+      error: 'Failed to update integrations',
       details: error.message,
     });
   }
@@ -1046,35 +963,31 @@ export const updateIntegrations = async (req, res) => {
 
 export const bulkUpdatePermissions = async (req, res) => {
   try {
-    console.log("[bulkUpdatePermissions] req.user:", req.user);
-    console.log("[bulkUpdatePermissions] req.params:", req.params);
-    console.log("[bulkUpdatePermissions] req.body:", req.body);
+    console.log('[bulkUpdatePermissions] req.user:', req.user);
+    console.log('[bulkUpdatePermissions] req.params:', req.params);
+    console.log('[bulkUpdatePermissions] req.body:', req.body);
     const { teamId } = req.params;
     const { updates } = req.body; // Array of { memberId, permissions }
     const userId = req.user.id;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     // Check permissions
-    const currentMember = team.members.find(
-      (m) => m.userId.toString() === userId && m.status === "active"
-    );
+    const currentMember = team.members.find((m) => m.userId.toString() === userId && m.status === 'active');
 
     if (!currentMember || !currentMember.permissions.canManageMembers) {
-      return res.status(403).json({ error: "Insufficient permissions" });
+      return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
     // Apply updates
     let updatedCount = 0;
     for (const update of updates) {
-      const member = team.members.find(
-        (m) => m.userId.toString() === update.memberId && m.status === "active"
-      );
+      const member = team.members.find((m) => m.userId.toString() === update.memberId && m.status === 'active');
 
-      if (member && member.role !== "owner") {
+      if (member && member.role !== 'owner') {
         member.permissions = { ...member.permissions, ...update.permissions };
         updatedCount++;
       }
@@ -1083,12 +996,7 @@ export const bulkUpdatePermissions = async (req, res) => {
     await team.save();
 
     // Add activity
-    team.addActivity(
-      "member_role_changed",
-      userId,
-      null,
-      `Bulk updated permissions for ${updatedCount} members`
-    );
+    team.addActivity('member_role_changed', userId, null, `Bulk updated permissions for ${updatedCount} members`);
     await team.save();
 
     res.json({
@@ -1096,9 +1004,9 @@ export const bulkUpdatePermissions = async (req, res) => {
       message: `Updated permissions for ${updatedCount} members`,
     });
   } catch (error) {
-    console.error("[bulkUpdatePermissions][ERROR]", error);
+    console.error('[bulkUpdatePermissions][ERROR]', error);
     res.status(500).json({
-      error: "Failed to update permissions",
+      error: 'Failed to update permissions',
       details: error.message,
     });
   }
@@ -1108,22 +1016,20 @@ export const bulkUpdatePermissions = async (req, res) => {
 
 export const checkPermissions = async (req, res) => {
   try {
-    console.log("[checkPermissions] req.user:", req.user);
-    console.log("[checkPermissions] req.params:", req.params);
+    console.log('[checkPermissions] req.user:', req.user);
+    console.log('[checkPermissions] req.params:', req.params);
     const { teamId } = req.params;
     const userId = req.user.id;
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return res.status(404).json({ error: 'Team not found' });
     }
 
-    const member = team.members.find(
-      (m) => m.userId.toString() === userId && m.status === "active"
-    );
+    const member = team.members.find((m) => m.userId.toString() === userId && m.status === 'active');
 
     if (!member) {
-      return res.status(403).json({ error: "Not a team member" });
+      return res.status(403).json({ error: 'Not a team member' });
     }
 
     res.json({
@@ -1131,13 +1037,13 @@ export const checkPermissions = async (req, res) => {
       data: {
         role: member.role,
         permissions: member.permissions,
-        isOwner: member.role === "owner",
+        isOwner: member.role === 'owner',
       },
     });
   } catch (error) {
-    console.error("[checkPermissions][ERROR]", error);
+    console.error('[checkPermissions][ERROR]', error);
     res.status(500).json({
-      error: "Failed to check permissions",
+      error: 'Failed to check permissions',
       details: error.message,
     });
   }

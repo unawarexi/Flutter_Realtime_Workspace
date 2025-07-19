@@ -1,11 +1,11 @@
 // referalCode.js - Improved version with fixes
 
-import crypto from "crypto";
-import UserInfo from "../models/userInfoModel.js";
+import crypto from 'crypto';
+import UserInfo from '../models/userInfoModel.js';
 
 // Generate a referral code with format: WRK + 6 random alphanum + TST
 export function generateReferralCode() {
-  const random = crypto.randomBytes(3).toString("hex").toUpperCase(); // 6 chars
+  const random = crypto.randomBytes(3).toString('hex').toUpperCase(); // 6 chars
   return `WRK${random}TST`;
 }
 
@@ -24,7 +24,7 @@ export async function assignReferralCode(user, options = {}) {
   if (!options.ignorePermissions) {
     // Check if user has permission to generate invite codes
     if (user.invitePermissions && user.invitePermissions[role] === false) {
-      throw new Error("You do not have permission to generate invite codes.");
+      throw new Error('You do not have permission to generate invite codes.');
     }
   }
 
@@ -39,7 +39,7 @@ export async function assignReferralCode(user, options = {}) {
 // Validate a referral code (check existence and expiry)
 export async function validateReferralCode(code) {
   const user = await UserInfo.findOne({ inviteCode: code });
-  if (!user) return { valid: false, reason: "Code not found" };
+  if (!user) return { valid: false, reason: 'Code not found' };
 
   if (user.inviteCodeExpiry && user.inviteCodeExpiry < new Date()) {
     // Code expired - regenerate automatically
@@ -47,13 +47,13 @@ export async function validateReferralCode(code) {
       await assignReferralCode(user);
       return {
         valid: false,
-        reason: "Code expired, regenerated",
+        reason: 'Code expired, regenerated',
         regenerated: user.inviteCode,
       };
     } catch (error) {
       return {
         valid: false,
-        reason: "Code expired and regeneration failed",
+        reason: 'Code expired and regeneration failed',
         error: error.message,
       };
     }
@@ -64,18 +64,14 @@ export async function validateReferralCode(code) {
 
 // Use a referral code (when new user joins with code)
 export async function useReferralCode({ memberUser, code }) {
-  console.log(
-    `[useReferralCode] Member ${memberUser.email} using code: ${code}`
-  );
+  console.log(`[useReferralCode] Member ${memberUser.email} using code: ${code}`);
 
   const validation = await validateReferralCode(code);
   if (!validation.valid) {
     console.log(`[useReferralCode] Invalid code: ${validation.reason}`);
     return {
       success: false,
-      reason: validation.regenerated
-        ? "Code expired, regenerated"
-        : "Invalid code",
+      reason: validation.regenerated ? 'Code expired, regenerated' : 'Invalid code',
       regenerated: validation.regenerated,
     };
   }
@@ -88,9 +84,7 @@ export async function useReferralCode({ memberUser, code }) {
   if (!Array.isArray(owner.referredTo)) owner.referredTo = [];
 
   // Update memberUser's invitedBy array (prevent duplicates)
-  const alreadyInvitedBy = memberUser.invitedBy.some(
-    (inviter) => inviter.inviterCode === code
-  );
+  const alreadyInvitedBy = memberUser.invitedBy.some((inviter) => inviter.inviterCode === code);
 
   if (!alreadyInvitedBy) {
     memberUser.invitedBy.push({
@@ -98,24 +92,18 @@ export async function useReferralCode({ memberUser, code }) {
       name: owner.fullName || owner.displayName || owner.email,
       inviterCode: code,
     });
-    console.log(
-      `[useReferralCode] Added ${owner.email} to ${memberUser.email}'s invitedBy`
-    );
+    console.log(`[useReferralCode] Added ${owner.email} to ${memberUser.email}'s invitedBy`);
   }
 
   // Update owner's referredTo array (prevent duplicates)
-  const alreadyReferred = owner.referredTo.some(
-    (referred) => referred.email === memberUser.email
-  );
+  const alreadyReferred = owner.referredTo.some((referred) => referred.email === memberUser.email);
 
   if (!alreadyReferred) {
     owner.referredTo.push({
       email: memberUser.email,
       name: memberUser.fullName || memberUser.displayName || memberUser.email,
     });
-    console.log(
-      `[useReferralCode] Added ${memberUser.email} to ${owner.email}'s referredTo`
-    );
+    console.log(`[useReferralCode] Added ${memberUser.email} to ${owner.email}'s referredTo`);
   }
 
   // Inherit company name from owner if member doesn't have one
@@ -127,23 +115,16 @@ export async function useReferralCode({ memberUser, code }) {
   // Generate new referral code for the new member
   try {
     const newCode = await assignReferralCode(memberUser);
-    console.log(
-      `[useReferralCode] Generated new code for ${memberUser.email}: ${newCode}`
-    );
+    console.log(`[useReferralCode] Generated new code for ${memberUser.email}: ${newCode}`);
   } catch (error) {
-    console.error(
-      `[useReferralCode] Failed to generate code for new member:`,
-      error.message
-    );
+    console.error(`[useReferralCode] Failed to generate code for new member:`, error.message);
     // Continue without failing the entire process
   }
 
   // Save both users
   await Promise.all([memberUser.save(), owner.save()]);
 
-  console.log(
-    `[useReferralCode] Successfully processed referral for ${memberUser.email}`
-  );
+  console.log(`[useReferralCode] Successfully processed referral for ${memberUser.email}`);
   return { success: true, owner, newMemberCode: memberUser.inviteCode };
 }
 
@@ -157,32 +138,25 @@ export async function revokeReferralCode(user) {
 
 // Check and auto-regenerate expired codes for all users (can be run as a cron job)
 export async function autoRegenerateExpiredCodes() {
-  console.log("[autoRegenerateExpiredCodes] Starting auto-regeneration...");
+  console.log('[autoRegenerateExpiredCodes] Starting auto-regeneration...');
   const now = new Date();
   const users = await UserInfo.find({
     inviteCodeExpiry: { $lt: now },
     inviteCode: { $exists: true, $ne: null },
   });
 
-  console.log(
-    `[autoRegenerateExpiredCodes] Found ${users.length} expired codes`
-  );
+  console.log(`[autoRegenerateExpiredCodes] Found ${users.length} expired codes`);
 
   for (const user of users) {
     try {
       await assignReferralCode(user);
-      console.log(
-        `[autoRegenerateExpiredCodes] Regenerated code for ${user.email}`
-      );
+      console.log(`[autoRegenerateExpiredCodes] Regenerated code for ${user.email}`);
     } catch (error) {
-      console.error(
-        `[autoRegenerateExpiredCodes] Failed to regenerate for ${user.email}:`,
-        error.message
-      );
+      console.error(`[autoRegenerateExpiredCodes] Failed to regenerate for ${user.email}:`, error.message);
     }
   }
 
-  console.log("[autoRegenerateExpiredCodes] Auto-regeneration completed");
+  console.log('[autoRegenerateExpiredCodes] Auto-regeneration completed');
 }
 
 // Get referral statistics for a user
@@ -217,7 +191,7 @@ export async function getReferralStats(userId) {
   try {
     stats.totalReferralsInChain = await calculateTotalReferrals(user.email);
   } catch (error) {
-    console.error("Error calculating total referrals:", error);
+    console.error('Error calculating total referrals:', error);
     stats.totalReferralsInChain = stats.directReferrals;
   }
 

@@ -1,10 +1,7 @@
-import Project from "../models/projectModel.js";
-import {
-  uploadToCloudinary,
-  deleteFromCloudinary,
-} from "../services/cloudinary.js";
-import mongoose from "mongoose";
-import { generateProjectKey, generateTeamId } from "../helpers/project_id_generator.js";
+import Project from '../models/projectModel.js';
+import { uploadToCloudinary, deleteFromCloudinary } from '../services/cloudinary.js';
+import mongoose from 'mongoose';
+import { generateProjectKey, generateTeamId } from '../helpers/project_id_generator.js';
 
 /**
  * Create a new project
@@ -47,22 +44,20 @@ export const createProject = async (req, res) => {
     }
 
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: 'User not found' });
     }
 
     // Parse fields if sent as JSON strings (from multipart/form-data)
-    if (typeof collaborators === "string")
-      collaborators = JSON.parse(collaborators);
-    if (typeof members === "string") members = JSON.parse(members);
-    if (typeof tags === "string") tags = JSON.parse(tags);
-    if (typeof customFields === "string")
-      customFields = JSON.parse(customFields);
+    if (typeof collaborators === 'string') collaborators = JSON.parse(collaborators);
+    if (typeof members === 'string') members = JSON.parse(members);
+    if (typeof tags === 'string') tags = JSON.parse(tags);
+    if (typeof customFields === 'string') customFields = JSON.parse(customFields);
 
     // Validate required fields
     if (!name /*|| !teamId*/) {
       return res.status(400).json({
-        status: "error",
-        message: "Project name is required",
+        status: 'error',
+        message: 'Project name is required',
       });
     }
 
@@ -78,9 +73,9 @@ export const createProject = async (req, res) => {
       key: projectKey,
       description,
       template,
-      status: status || "active",
-      priority: priority || "medium",
-      color: color || "#1E40AF",
+      status: status || 'active',
+      priority: priority || 'medium',
+      color: color || '#1E40AF',
       teamId,
       createdBy: mongoId, // Assuming user is attached to req via auth middleware
       collaborators: collaborators || [],
@@ -91,10 +86,10 @@ export const createProject = async (req, res) => {
       customFields: customFields || {},
       timeline: [
         {
-          title: "Project Created",
-          description: "Project was created",
+          title: 'Project Created',
+          description: 'Project was created',
           date: new Date(),
-          type: "created",
+          type: 'created',
         },
       ],
     });
@@ -104,18 +99,14 @@ export const createProject = async (req, res) => {
       const uploadPromises = req.files.map(async (file) => {
         try {
           // FIX: Use the correct custom folder path as specified
-          const uploadResult = await uploadToCloudinary(
-            file.buffer,
-            file.originalname,
-           
-          );
+          const uploadResult = await uploadToCloudinary(file.buffer, file.originalname);
 
           // Log the upload result for debugging
-          console.log("Upload result:", JSON.stringify(uploadResult, null, 2));
+          console.log('Upload result:', JSON.stringify(uploadResult, null, 2));
 
           // FIX: Handle both secure_url and url fields from Cloudinary
           const fileUrl = uploadResult.secure_url || uploadResult.url;
-          
+
           if (!fileUrl) {
             throw new Error(
               `Upload failed: No URL returned for file ${file.originalname}. Upload result: ${JSON.stringify(uploadResult)}`
@@ -130,8 +121,7 @@ export const createProject = async (req, res) => {
             format: uploadResult.format,
             bytes: uploadResult.bytes,
             filename: uploadResult.filename || file.originalname,
-            original_filename:
-              uploadResult.original_filename || file.originalname,
+            original_filename: uploadResult.original_filename || file.originalname,
             type: uploadResult.type || file.mimetype,
             width: uploadResult.width || null,
             height: uploadResult.height || null,
@@ -142,10 +132,7 @@ export const createProject = async (req, res) => {
 
           return attachment;
         } catch (uploadError) {
-          console.error(
-            `Failed to upload file ${file.originalname}:`,
-            uploadError
-          );
+          console.error(`Failed to upload file ${file.originalname}:`, uploadError);
           throw uploadError;
         }
       });
@@ -154,12 +141,10 @@ export const createProject = async (req, res) => {
         const attachments = await Promise.all(uploadPromises);
 
         // Validate all attachments have URLs before adding to project
-        const validAttachments = attachments.filter(
-          (attachment) => attachment.url
-        );
+        const validAttachments = attachments.filter((attachment) => attachment.url);
 
         if (validAttachments.length !== attachments.length) {
-          throw new Error("Some attachments failed to upload properly");
+          throw new Error('Some attachments failed to upload properly');
         }
 
         project.attachments.push(...validAttachments);
@@ -167,16 +152,16 @@ export const createProject = async (req, res) => {
         // Add timeline events for each attachment
         validAttachments.forEach((attachment) => {
           project.timeline.push({
-            title: "Attachment Added",
+            title: 'Attachment Added',
             description: `File "${attachment.filename}" was uploaded`,
             date: new Date(),
-            type: "attachment",
+            type: 'attachment',
           });
         });
       } catch (uploadError) {
         return res.status(500).json({
-          status: "error",
-          message: "Failed to upload one or more attachments",
+          status: 'error',
+          message: 'Failed to upload one or more attachments',
           error: uploadError.message,
         });
       }
@@ -186,22 +171,22 @@ export const createProject = async (req, res) => {
 
     // Populate related fields
     await project.populate([
-      { path: "createdBy", select: "name email avatar" },
-      { path: "collaborators", select: "name email avatar" },
-      { path: "members", select: "name email avatar" },
-      { path: "teamId", select: "name description" },
+      { path: 'createdBy', select: 'name email avatar' },
+      { path: 'collaborators', select: 'name email avatar' },
+      { path: 'members', select: 'name email avatar' },
+      { path: 'teamId', select: 'name description' },
     ]);
 
     res.status(201).json({
-      status: "success",
-      message: "Project created successfully",
+      status: 'success',
+      message: 'Project created successfully',
       data: project,
     });
   } catch (error) {
-    console.error("Create project error:", error);
+    console.error('Create project error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to create project",
+      status: 'error',
+      message: 'Failed to create project',
       error: error.message,
     });
   }
@@ -222,8 +207,8 @@ export const getProjects = async (req, res) => {
       recent,
       archived,
       search,
-      sortBy = "updatedAt",
-      sortOrder = "desc",
+      sortBy = 'updatedAt',
+      sortOrder = 'desc',
       tags,
     } = req.query;
 
@@ -233,32 +218,32 @@ export const getProjects = async (req, res) => {
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
     if (teamId) filter.teamId = teamId;
-    if (starred !== undefined) filter.starred = starred === "true";
-    if (recent !== undefined) filter.recent = recent === "true";
-    if (archived !== undefined) filter.archived = archived === "true";
-    if (tags) filter.tags = { $in: tags.split(",") };
+    if (starred !== undefined) filter.starred = starred === 'true';
+    if (recent !== undefined) filter.recent = recent === 'true';
+    if (archived !== undefined) filter.archived = archived === 'true';
+    if (tags) filter.tags = { $in: tags.split(',') };
 
     // Search functionality
     if (search) {
       filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-        { key: { $regex: search, $options: "i" } },
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { key: { $regex: search, $options: 'i' } },
       ];
     }
 
     // Calculate pagination
     const skip = (page - 1) * limit;
     const sortOptions = {};
-    sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
     // Execute query
     const projects = await Project.find(filter)
       .populate([
-        { path: "createdBy", select: "name email avatar" },
-        { path: "collaborators", select: "name email avatar" },
-        { path: "members", select: "name email avatar" },
-        { path: "teamId", select: "name description" },
+        { path: 'createdBy', select: 'name email avatar' },
+        { path: 'collaborators', select: 'name email avatar' },
+        { path: 'members', select: 'name email avatar' },
+        { path: 'teamId', select: 'name description' },
       ])
       .sort(sortOptions)
       .skip(skip)
@@ -268,7 +253,7 @@ export const getProjects = async (req, res) => {
     const totalPages = Math.ceil(total / limit);
 
     res.status(200).json({
-      status: "success",
+      status: 'success',
       data: projects,
       pagination: {
         currentPage: parseInt(page),
@@ -280,10 +265,10 @@ export const getProjects = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get projects error:", error);
+    console.error('Get projects error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to fetch projects",
+      status: 'error',
+      message: 'Failed to fetch projects',
       error: error.message,
     });
   }
@@ -298,22 +283,22 @@ export const getProjectById = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid project ID",
+        status: 'error',
+        message: 'Invalid project ID',
       });
     }
 
     const project = await Project.findById(id).populate([
-      { path: "createdBy", select: "name email avatar" },
-      { path: "collaborators", select: "name email avatar" },
-      { path: "members", select: "name email avatar" },
-      { path: "teamId", select: "name description" },
+      { path: 'createdBy', select: 'name email avatar' },
+      { path: 'collaborators', select: 'name email avatar' },
+      { path: 'members', select: 'name email avatar' },
+      { path: 'teamId', select: 'name description' },
     ]);
 
     if (!project) {
       return res.status(404).json({
-        status: "error",
-        message: "Project not found",
+        status: 'error',
+        message: 'Project not found',
       });
     }
 
@@ -322,14 +307,14 @@ export const getProjectById = async (req, res) => {
     await project.save();
 
     res.status(200).json({
-      status: "success",
+      status: 'success',
       data: project,
     });
   } catch (error) {
-    console.error("Get project by ID error:", error);
+    console.error('Get project by ID error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to fetch project",
+      status: 'error',
+      message: 'Failed to fetch project',
       error: error.message,
     });
   }
@@ -345,8 +330,8 @@ export const updateProject = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid project ID",
+        status: 'error',
+        message: 'Invalid project ID',
       });
     }
 
@@ -354,27 +339,18 @@ export const updateProject = async (req, res) => {
     const project = await Project.findById(id);
     if (!project) {
       return res.status(404).json({
-        status: "error",
-        message: "Project not found",
+        status: 'error',
+        message: 'Project not found',
       });
     }
 
     // Track what changed for timeline
     const changes = [];
-    const fieldsToTrack = [
-      "name",
-      "description",
-      "status",
-      "priority",
-      "startDate",
-      "endDate",
-    ];
+    const fieldsToTrack = ['name', 'description', 'status', 'priority', 'startDate', 'endDate'];
 
     fieldsToTrack.forEach((field) => {
       if (updateData[field] && updateData[field] !== project[field]) {
-        changes.push(
-          `${field} changed from "${project[field]}" to "${updateData[field]}"`
-        );
+        changes.push(`${field} changed from "${project[field]}" to "${updateData[field]}"`);
       }
     });
 
@@ -387,32 +363,32 @@ export const updateProject = async (req, res) => {
           changes.length > 0
             ? {
                 timeline: {
-                  title: "Project Updated",
-                  description: changes.join(", "),
+                  title: 'Project Updated',
+                  description: changes.join(', '),
                   date: new Date(),
-                  type: "updated",
+                  type: 'updated',
                 },
               }
             : undefined,
       },
       { new: true, runValidators: true }
     ).populate([
-      { path: "createdBy", select: "name email avatar" },
-      { path: "collaborators", select: "name email avatar" },
-      { path: "members", select: "name email avatar" },
-      { path: "teamId", select: "name description" },
+      { path: 'createdBy', select: 'name email avatar' },
+      { path: 'collaborators', select: 'name email avatar' },
+      { path: 'members', select: 'name email avatar' },
+      { path: 'teamId', select: 'name description' },
     ]);
 
     res.status(200).json({
-      status: "success",
-      message: "Project updated successfully",
+      status: 'success',
+      message: 'Project updated successfully',
       data: updatedProject,
     });
   } catch (error) {
-    console.error("Update project error:", error);
+    console.error('Update project error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to update project",
+      status: 'error',
+      message: 'Failed to update project',
       error: error.message,
     });
   }
@@ -427,16 +403,16 @@ export const deleteProject = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid project ID",
+        status: 'error',
+        message: 'Invalid project ID',
       });
     }
 
     const project = await Project.findById(id);
     if (!project) {
       return res.status(404).json({
-        status: "error",
-        message: "Project not found",
+        status: 'error',
+        message: 'Project not found',
       });
     }
 
@@ -444,14 +420,11 @@ export const deleteProject = async (req, res) => {
     if (project.attachments && project.attachments.length > 0) {
       for (const attachment of project.attachments) {
         try {
-          if (typeof attachment === "object" && attachment.public_id) {
-            await deleteFromCloudinary(
-              attachment.public_id,
-              attachment.resource_type
-            );
+          if (typeof attachment === 'object' && attachment.public_id) {
+            await deleteFromCloudinary(attachment.public_id, attachment.resource_type);
           }
         } catch (error) {
-          console.error("Error deleting attachment:", error);
+          console.error('Error deleting attachment:', error);
         }
       }
     }
@@ -459,14 +432,14 @@ export const deleteProject = async (req, res) => {
     await Project.findByIdAndDelete(id);
 
     res.status(200).json({
-      status: "success",
-      message: "Project deleted successfully",
+      status: 'success',
+      message: 'Project deleted successfully',
     });
   } catch (error) {
-    console.error("Delete project error:", error);
+    console.error('Delete project error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to delete project",
+      status: 'error',
+      message: 'Failed to delete project',
       error: error.message,
     });
   }
@@ -481,23 +454,23 @@ export const uploadAttachment = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid project ID",
+        status: 'error',
+        message: 'Invalid project ID',
       });
     }
 
     if (!req.file) {
       return res.status(400).json({
-        status: "error",
-        message: "No file uploaded",
+        status: 'error',
+        message: 'No file uploaded',
       });
     }
 
     const project = await Project.findById(id);
     if (!project) {
       return res.status(404).json({
-        status: "error",
-        message: "Project not found",
+        status: 'error',
+        message: 'Project not found',
       });
     }
 
@@ -530,27 +503,27 @@ export const uploadAttachment = async (req, res) => {
 
     // Add timeline event
     project.timeline.push({
-      title: "Attachment Added",
+      title: 'Attachment Added',
       description: `File "${attachment.filename}" was uploaded`,
       date: new Date(),
-      type: "attachment",
+      type: 'attachment',
     });
 
     await project.save();
 
     res.status(200).json({
-      status: "success",
-      message: "File uploaded successfully",
+      status: 'success',
+      message: 'File uploaded successfully',
       data: {
         attachment,
         attachmentCount: project.attachments.length,
       },
     });
   } catch (error) {
-    console.error("Upload attachment error:", error);
+    console.error('Upload attachment error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to upload attachment",
+      status: 'error',
+      message: 'Failed to upload attachment',
       error: error.message,
     });
   }
@@ -565,28 +538,26 @@ export const deleteAttachment = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid project ID",
+        status: 'error',
+        message: 'Invalid project ID',
       });
     }
 
     const project = await Project.findById(id);
     if (!project) {
       return res.status(404).json({
-        status: "error",
-        message: "Project not found",
+        status: 'error',
+        message: 'Project not found',
       });
     }
 
     // Find attachment
-    const attachmentIndex = project.attachments.findIndex(
-      (att) => att._id.toString() === attachmentId
-    );
+    const attachmentIndex = project.attachments.findIndex((att) => att._id.toString() === attachmentId);
 
     if (attachmentIndex === -1) {
       return res.status(404).json({
-        status: "error",
-        message: "Attachment not found",
+        status: 'error',
+        message: 'Attachment not found',
       });
     }
 
@@ -594,12 +565,9 @@ export const deleteAttachment = async (req, res) => {
 
     // Delete from Cloudinary
     try {
-      await deleteFromCloudinary(
-        attachment.public_id,
-        attachment.resource_type
-      );
+      await deleteFromCloudinary(attachment.public_id, attachment.resource_type);
     } catch (error) {
-      console.error("Error deleting from Cloudinary:", error);
+      console.error('Error deleting from Cloudinary:', error);
     }
 
     // Remove from array
@@ -607,26 +575,26 @@ export const deleteAttachment = async (req, res) => {
 
     // Add timeline event
     project.timeline.push({
-      title: "Attachment Removed",
+      title: 'Attachment Removed',
       description: `File "${attachment.filename}" was deleted`,
       date: new Date(),
-      type: "attachment",
+      type: 'attachment',
     });
 
     await project.save();
 
     res.status(200).json({
-      status: "success",
-      message: "Attachment deleted successfully",
+      status: 'success',
+      message: 'Attachment deleted successfully',
       data: {
         attachmentCount: project.attachments.length,
       },
     });
   } catch (error) {
-    console.error("Delete attachment error:", error);
+    console.error('Delete attachment error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to delete attachment",
+      status: 'error',
+      message: 'Failed to delete attachment',
       error: error.message,
     });
   }
@@ -642,16 +610,16 @@ export const getProjectAttachments = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid project ID",
+        status: 'error',
+        message: 'Invalid project ID',
       });
     }
 
-    const project = await Project.findById(id).select("attachments name key");
+    const project = await Project.findById(id).select('attachments name key');
     if (!project) {
       return res.status(404).json({
-        status: "error",
-        message: "Project not found",
+        status: 'error',
+        message: 'Project not found',
       });
     }
 
@@ -664,15 +632,12 @@ export const getProjectAttachments = async (req, res) => {
 
     // Pagination
     const skip = (page - 1) * limit;
-    const paginatedAttachments = attachments.slice(
-      skip,
-      skip + parseInt(limit)
-    );
+    const paginatedAttachments = attachments.slice(skip, skip + parseInt(limit));
     const total = attachments.length;
     const totalPages = Math.ceil(total / limit);
 
     res.status(200).json({
-      status: "success",
+      status: 'success',
       data: {
         attachments: paginatedAttachments,
         project: {
@@ -689,10 +654,10 @@ export const getProjectAttachments = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get attachments error:", error);
+    console.error('Get attachments error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to fetch attachments",
+      status: 'error',
+      message: 'Failed to fetch attachments',
       error: error.message,
     });
   }
@@ -707,16 +672,16 @@ export const toggleProjectStar = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid project ID",
+        status: 'error',
+        message: 'Invalid project ID',
       });
     }
 
     const project = await Project.findById(id);
     if (!project) {
       return res.status(404).json({
-        status: "error",
-        message: "Project not found",
+        status: 'error',
+        message: 'Project not found',
       });
     }
 
@@ -725,26 +690,26 @@ export const toggleProjectStar = async (req, res) => {
 
     // Add timeline event
     project.timeline.push({
-      title: project.starred ? "Project Starred" : "Project Unstarred",
-      description: `Project was ${project.starred ? "added to" : "removed from"} starred projects`,
+      title: project.starred ? 'Project Starred' : 'Project Unstarred',
+      description: `Project was ${project.starred ? 'added to' : 'removed from'} starred projects`,
       date: new Date(),
-      type: "starred",
+      type: 'starred',
     });
 
     await project.save();
 
     res.status(200).json({
-      status: "success",
-      message: `Project ${project.starred ? "starred" : "unstarred"} successfully`,
+      status: 'success',
+      message: `Project ${project.starred ? 'starred' : 'unstarred'} successfully`,
       data: {
         starred: project.starred,
       },
     });
   } catch (error) {
-    console.error("Toggle star error:", error);
+    console.error('Toggle star error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to toggle star status",
+      status: 'error',
+      message: 'Failed to toggle star status',
       error: error.message,
     });
   }
@@ -759,46 +724,46 @@ export const toggleProjectArchive = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid project ID",
+        status: 'error',
+        message: 'Invalid project ID',
       });
     }
 
     const project = await Project.findById(id);
     if (!project) {
       return res.status(404).json({
-        status: "error",
-        message: "Project not found",
+        status: 'error',
+        message: 'Project not found',
       });
     }
 
     // Toggle archived status
     project.archived = !project.archived;
-    project.status = project.archived ? "archived" : "active";
+    project.status = project.archived ? 'archived' : 'active';
 
     // Add timeline event
     project.timeline.push({
-      title: project.archived ? "Project Archived" : "Project Restored",
-      description: `Project was ${project.archived ? "archived" : "restored from archive"}`,
+      title: project.archived ? 'Project Archived' : 'Project Restored',
+      description: `Project was ${project.archived ? 'archived' : 'restored from archive'}`,
       date: new Date(),
-      type: "archived",
+      type: 'archived',
     });
 
     await project.save();
 
     res.status(200).json({
-      status: "success",
-      message: `Project ${project.archived ? "archived" : "restored"} successfully`,
+      status: 'success',
+      message: `Project ${project.archived ? 'archived' : 'restored'} successfully`,
       data: {
         archived: project.archived,
         status: project.status,
       },
     });
   } catch (error) {
-    console.error("Toggle archive error:", error);
+    console.error('Toggle archive error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to toggle archive status",
+      status: 'error',
+      message: 'Failed to toggle archive status',
       error: error.message,
     });
   }
@@ -814,23 +779,23 @@ export const updateProjectProgress = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid project ID",
+        status: 'error',
+        message: 'Invalid project ID',
       });
     }
 
     if (progress < 0 || progress > 1) {
       return res.status(400).json({
-        status: "error",
-        message: "Progress must be between 0 and 1",
+        status: 'error',
+        message: 'Progress must be between 0 and 1',
       });
     }
 
     const project = await Project.findById(id);
     if (!project) {
       return res.status(404).json({
-        status: "error",
-        message: "Project not found",
+        status: 'error',
+        message: 'Project not found',
       });
     }
 
@@ -838,27 +803,27 @@ export const updateProjectProgress = async (req, res) => {
     project.progress = progress;
 
     // Update status based on progress
-    if (progress === 1 && project.status !== "completed") {
-      project.status = "completed";
+    if (progress === 1 && project.status !== 'completed') {
+      project.status = 'completed';
       project.completed = true;
-    } else if (progress < 1 && project.status === "completed") {
-      project.status = "active";
+    } else if (progress < 1 && project.status === 'completed') {
+      project.status = 'active';
       project.completed = false;
     }
 
     // Add timeline event
     project.timeline.push({
-      title: "Progress Updated",
+      title: 'Progress Updated',
       description: `Progress updated from ${Math.round(oldProgress * 100)}% to ${Math.round(progress * 100)}%`,
       date: new Date(),
-      type: "progress",
+      type: 'progress',
     });
 
     await project.save();
 
     res.status(200).json({
-      status: "success",
-      message: "Project progress updated successfully",
+      status: 'success',
+      message: 'Project progress updated successfully',
       data: {
         progress: project.progress,
         status: project.status,
@@ -866,10 +831,10 @@ export const updateProjectProgress = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Update progress error:", error);
+    console.error('Update progress error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to update project progress",
+      status: 'error',
+      message: 'Failed to update project progress',
       error: error.message,
     });
   }
@@ -881,70 +846,66 @@ export const updateProjectProgress = async (req, res) => {
 export const updateProjectCollaborators = async (req, res) => {
   try {
     const { id } = req.params;
-    const { collaboratorIds, action = "add" } = req.body; // action: "add" or "remove"
+    const { collaboratorIds, action = 'add' } = req.body; // action: "add" or "remove"
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid project ID",
+        status: 'error',
+        message: 'Invalid project ID',
       });
     }
 
     if (!Array.isArray(collaboratorIds) || collaboratorIds.length === 0) {
       return res.status(400).json({
-        status: "error",
-        message: "Collaborator IDs must be provided as an array",
+        status: 'error',
+        message: 'Collaborator IDs must be provided as an array',
       });
     }
 
     const project = await Project.findById(id);
     if (!project) {
       return res.status(404).json({
-        status: "error",
-        message: "Project not found",
+        status: 'error',
+        message: 'Project not found',
       });
     }
 
-    let message = "";
-    let timelineDescription = "";
+    let message = '';
+    let timelineDescription = '';
 
-    if (action === "add") {
+    if (action === 'add') {
       // Add collaborators (avoid duplicates)
-      const newCollaborators = collaboratorIds.filter(
-        (id) => !project.collaborators.includes(id)
-      );
+      const newCollaborators = collaboratorIds.filter((id) => !project.collaborators.includes(id));
       project.collaborators.push(...newCollaborators);
       message = `${newCollaborators.length} collaborator(s) added successfully`;
       timelineDescription = `${newCollaborators.length} new collaborator(s) added to project`;
-    } else if (action === "remove") {
+    } else if (action === 'remove') {
       // Remove collaborators
-      project.collaborators = project.collaborators.filter(
-        (id) => !collaboratorIds.includes(id.toString())
-      );
+      project.collaborators = project.collaborators.filter((id) => !collaboratorIds.includes(id.toString()));
       message = `${collaboratorIds.length} collaborator(s) removed successfully`;
       timelineDescription = `${collaboratorIds.length} collaborator(s) removed from project`;
     } else {
       return res.status(400).json({
-        status: "error",
+        status: 'error',
         message: "Invalid action. Use 'add' or 'remove'",
       });
     }
 
     // Add timeline event
     project.timeline.push({
-      title: "Collaborators Updated",
+      title: 'Collaborators Updated',
       description: timelineDescription,
       date: new Date(),
-      type: "collaborators",
+      type: 'collaborators',
     });
 
     await project.save();
 
     // Populate collaborators for response
-    await project.populate("collaborators", "name email avatar");
+    await project.populate('collaborators', 'name email avatar');
 
     res.status(200).json({
-      status: "success",
+      status: 'success',
       message,
       data: {
         collaborators: project.collaborators,
@@ -952,10 +913,10 @@ export const updateProjectCollaborators = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Update collaborators error:", error);
+    console.error('Update collaborators error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to update collaborators",
+      status: 'error',
+      message: 'Failed to update collaborators',
       error: error.message,
     });
   }
@@ -971,50 +932,50 @@ export const addTimelineEvent = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid project ID",
+        status: 'error',
+        message: 'Invalid project ID',
       });
     }
 
     if (!title) {
       return res.status(400).json({
-        status: "error",
-        message: "Timeline event title is required",
+        status: 'error',
+        message: 'Timeline event title is required',
       });
     }
 
     const project = await Project.findById(id);
     if (!project) {
       return res.status(404).json({
-        status: "error",
-        message: "Project not found",
+        status: 'error',
+        message: 'Project not found',
       });
     }
 
     // Add timeline event
     const timelineEvent = {
       title,
-      description: description || "",
+      description: description || '',
       date: new Date(),
-      type: type || "custom",
+      type: type || 'custom',
     };
 
     project.timeline.push(timelineEvent);
     await project.save();
 
     res.status(200).json({
-      status: "success",
-      message: "Timeline event added successfully",
+      status: 'success',
+      message: 'Timeline event added successfully',
       data: {
         timelineEvent: project.timeline[project.timeline.length - 1],
         timelineCount: project.timeline.length,
       },
     });
   } catch (error) {
-    console.error("Add timeline event error:", error);
+    console.error('Add timeline event error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to add timeline event",
+      status: 'error',
+      message: 'Failed to add timeline event',
       error: error.message,
     });
   }
@@ -1030,16 +991,16 @@ export const getProjectTimeline = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid project ID",
+        status: 'error',
+        message: 'Invalid project ID',
       });
     }
 
-    const project = await Project.findById(id).select("timeline name key");
+    const project = await Project.findById(id).select('timeline name key');
     if (!project) {
       return res.status(404).json({
-        status: "error",
-        message: "Project not found",
+        status: 'error',
+        message: 'Project not found',
       });
     }
 
@@ -1057,7 +1018,7 @@ export const getProjectTimeline = async (req, res) => {
     const totalPages = Math.ceil(total / limit);
 
     res.status(200).json({
-      status: "success",
+      status: 'success',
       data: {
         timeline: paginatedTimeline,
         project: {
@@ -1074,10 +1035,10 @@ export const getProjectTimeline = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get timeline error:", error);
+    console.error('Get timeline error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to fetch project timeline",
+      status: 'error',
+      message: 'Failed to fetch project timeline',
       error: error.message,
     });
   }
@@ -1097,17 +1058,17 @@ export const getProjectStats = async (req, res) => {
         $group: {
           _id: null,
           total: { $sum: 1 },
-          active: { $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] } },
+          active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
           completed: {
-            $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] },
           },
-          archived: { $sum: { $cond: ["$archived", 1, 0] } },
-          starred: { $sum: { $cond: ["$starred", 1, 0] } },
+          archived: { $sum: { $cond: ['$archived', 1, 0] } },
+          starred: { $sum: { $cond: ['$starred', 1, 0] } },
           highPriority: {
-            $sum: { $cond: [{ $eq: ["$priority", "high"] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ['$priority', 'high'] }, 1, 0] },
           },
-          averageProgress: { $avg: "$progress" },
-          totalAttachments: { $sum: { $size: "$attachments" } },
+          averageProgress: { $avg: '$progress' },
+          totalAttachments: { $sum: { $size: '$attachments' } },
         },
       },
     ]);
@@ -1127,21 +1088,21 @@ export const getProjectStats = async (req, res) => {
     const recentProjects = await Project.find(filter)
       .sort({ lastViewed: -1 })
       .limit(5)
-      .select("name key lastViewed progress status")
-      .populate("createdBy", "name email");
+      .select('name key lastViewed progress status')
+      .populate('createdBy', 'name email');
 
     res.status(200).json({
-      status: "success",
+      status: 'success',
       data: {
         stats: result,
         recentProjects,
       },
     });
   } catch (error) {
-    console.error("Get stats error:", error);
+    console.error('Get stats error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to fetch project statistics",
+      status: 'error',
+      message: 'Failed to fetch project statistics',
       error: error.message,
     });
   }
@@ -1157,16 +1118,16 @@ export const duplicateProject = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid project ID",
+        status: 'error',
+        message: 'Invalid project ID',
       });
     }
 
     const originalProject = await Project.findById(id);
     if (!originalProject) {
       return res.status(404).json({
-        status: "error",
-        message: "Project not found",
+        status: 'error',
+        message: 'Project not found',
       });
     }
 
@@ -1182,7 +1143,7 @@ export const duplicateProject = async (req, res) => {
       key: projectKey,
       description: originalProject.description,
       template: originalProject.template,
-      status: "active",
+      status: 'active',
       priority: originalProject.priority,
       color: originalProject.color,
       teamId: originalProject.teamId,
@@ -1194,10 +1155,10 @@ export const duplicateProject = async (req, res) => {
       attachments: includeAttachments ? originalProject.attachments : [],
       timeline: [
         {
-          title: "Project Created",
+          title: 'Project Created',
           description: `Project duplicated from ${originalProject.name} (${originalProject.key})`,
           date: new Date(),
-          type: "created",
+          type: 'created',
         },
       ],
     };
@@ -1207,22 +1168,22 @@ export const duplicateProject = async (req, res) => {
 
     // Populate related fields
     await duplicatedProject.populate([
-      { path: "createdBy", select: "name email avatar" },
-      { path: "collaborators", select: "name email avatar" },
-      { path: "members", select: "name email avatar" },
-      { path: "teamId", select: "name description" },
+      { path: 'createdBy', select: 'name email avatar' },
+      { path: 'collaborators', select: 'name email avatar' },
+      { path: 'members', select: 'name email avatar' },
+      { path: 'teamId', select: 'name description' },
     ]);
 
     res.status(201).json({
-      status: "success",
-      message: "Project duplicated successfully",
+      status: 'success',
+      message: 'Project duplicated successfully',
       data: duplicatedProject,
     });
   } catch (error) {
-    console.error("Duplicate project error:", error);
+    console.error('Duplicate project error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Failed to duplicate project",
+      status: 'error',
+      message: 'Failed to duplicate project',
       error: error.message,
     });
   }
@@ -1235,13 +1196,13 @@ export const getNewProjectKey = (req, res) => {
   try {
     const key = generateProjectKey();
     res.status(200).json({
-      status: "success",
+      status: 'success',
       projectKey: key,
     });
   } catch (error) {
     res.status(500).json({
-      status: "error",
-      message: "Failed to generate project key",
+      status: 'error',
+      message: 'Failed to generate project key',
       error: error.message,
     });
   }
@@ -1254,13 +1215,13 @@ export const getNewTeamId = (req, res) => {
   try {
     const teamId = generateTeamId();
     res.status(200).json({
-      status: "success",
+      status: 'success',
       teamId,
     });
   } catch (error) {
     res.status(500).json({
-      status: "error",
-      message: "Failed to generate team id",
+      status: 'error',
+      message: 'Failed to generate team id',
       error: error.message,
     });
   }

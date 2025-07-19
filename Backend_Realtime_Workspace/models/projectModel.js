@@ -1,11 +1,11 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const timelineEventSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: { type: String },
     date: { type: Date, default: Date.now },
-    type: { type: String, default: "custom" }, // e.g. "created", "updated", "milestone", "attachment", "collaborators"
+    type: { type: String, default: 'custom' }, // e.g. "created", "updated", "milestone", "attachment", "collaborators"
   },
   { _id: false }
 );
@@ -24,7 +24,7 @@ const attachmentSchema = new mongoose.Schema(
     height: { type: Number }, // for images/videos
     duration: { type: Number }, // for videos/audio (in seconds)
     uploadedAt: { type: Date, default: Date.now },
-    uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" },
+    uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'UserInfo' },
   },
   { _id: true } // Keep _id for attachments to enable individual deletion
 );
@@ -36,27 +36,13 @@ const projectSchema = new mongoose.Schema(
     description: { type: String, trim: true },
     template: {
       type: String,
-      enum: [
-        "Kanban",
-        "Scrum",
-        "Blank Project",
-        "Project Management",
-        "Task Tracking"
-      ],
-      default: "Kanban",
+      enum: ['Kanban', 'Scrum', 'Blank Project', 'Project Management', 'Task Tracking'],
+      default: 'Kanban',
     },
     status: {
       type: String,
-      enum: [
-        "active",
-        "archived",
-        "on-hold",
-        "completed",
-        "planning",
-        "review",
-        "cancelled",
-      ],
-      default: "active",
+      enum: ['active', 'archived', 'on-hold', 'completed', 'planning', 'review', 'cancelled'],
+      default: 'active',
     },
     isActive: { type: Boolean, default: true }, // quick status check
     archived: { type: Boolean, default: false },
@@ -65,30 +51,30 @@ const projectSchema = new mongoose.Schema(
     starred: { type: Boolean, default: false },
     priority: {
       type: String,
-      enum: ["low", "medium", "high", "critical"],
-      default: "medium",
+      enum: ['low', 'medium', 'high', 'critical'],
+      default: 'medium',
     },
-    color: { type: String, default: "#1E40AF" }, // hex color for UI
+    color: { type: String, default: '#1E40AF' }, // hex color for UI
     teamId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Team",
+      ref: 'Team',
       // required: true, // <-- Make optional
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "UserInfo",
+      ref: 'UserInfo',
       required: true,
     },
     collaborators: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "UserInfo",
+        ref: 'UserInfo',
       },
     ],
     members: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "UserInfo",
+        ref: 'UserInfo',
       },
     ],
     tags: [
@@ -118,13 +104,13 @@ const projectSchema = new mongoose.Schema(
     budget: {
       allocated: { type: Number, default: 0 },
       spent: { type: Number, default: 0 },
-      currency: { type: String, default: "USD" },
+      currency: { type: String, default: 'USD' },
     },
 
     timeTracking: {
       estimated: { type: Number, default: 0 }, // in hours
       actual: { type: Number, default: 0 }, // in hours
-      unit: { type: String, default: "hours" },
+      unit: { type: String, default: 'hours' },
     },
 
     // Custom fields for extensibility
@@ -154,22 +140,22 @@ projectSchema.index({ starred: 1, teamId: 1 });
 projectSchema.index({ archived: 1, teamId: 1 });
 projectSchema.index({ lastViewed: -1 });
 projectSchema.index({ tags: 1 });
-projectSchema.index({ name: "text", description: "text" }); 
+projectSchema.index({ name: 'text', description: 'text' });
 
 // Virtual fields
-projectSchema.virtual("progressPercentage").get(function () {
+projectSchema.virtual('progressPercentage').get(function () {
   return Math.round(this.progress * 100);
 });
 
-projectSchema.virtual("attachmentCount").get(function () {
+projectSchema.virtual('attachmentCount').get(function () {
   return this.attachments ? this.attachments.length : 0;
 });
 
-projectSchema.virtual("collaboratorCount").get(function () {
+projectSchema.virtual('collaboratorCount').get(function () {
   return this.collaborators ? this.collaborators.length : 0;
 });
 
-projectSchema.virtual("daysActive").get(function () {
+projectSchema.virtual('daysActive').get(function () {
   const now = new Date();
   const created = this.createdAt;
   const diffTime = Math.abs(now - created);
@@ -177,13 +163,13 @@ projectSchema.virtual("daysActive").get(function () {
   return diffDays;
 });
 
-projectSchema.virtual("isOverdue").get(function () {
+projectSchema.virtual('isOverdue').get(function () {
   if (!this.endDate) return false;
   return new Date() > this.endDate && !this.completed;
 });
 
 // Pre-save middleware
-projectSchema.pre("save", function (next) {
+projectSchema.pre('save', function (next) {
   // Update recent flag based on lastViewed
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -192,11 +178,11 @@ projectSchema.pre("save", function (next) {
   // Auto-complete based on progress
   if (this.progress === 1 && !this.completed) {
     this.completed = true;
-    this.status = "completed";
+    this.status = 'completed';
   } else if (this.progress < 1 && this.completed) {
     this.completed = false;
-    if (this.status === "completed") {
-      this.status = "active";
+    if (this.status === 'completed') {
+      this.status = 'active';
     }
   }
 
@@ -204,11 +190,7 @@ projectSchema.pre("save", function (next) {
 });
 
 // Instance methods
-projectSchema.methods.addTimelineEvent = function (
-  title,
-  description,
-  type = "custom"
-) {
+projectSchema.methods.addTimelineEvent = function (title, description, type = 'custom') {
   this.timeline.push({
     title,
     description,
@@ -223,9 +205,9 @@ projectSchema.methods.updateProgress = function (progress) {
   this.progress = progress;
 
   this.addTimelineEvent(
-    "Progress Updated",
+    'Progress Updated',
     `Progress updated from ${Math.round(oldProgress * 100)}% to ${Math.round(progress * 100)}%`,
-    "progress"
+    'progress'
   );
 
   return this.save();
@@ -241,14 +223,14 @@ projectSchema.statics.getProjectStats = function (teamId = null) {
       $group: {
         _id: null,
         total: { $sum: 1 },
-        active: { $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] } },
+        active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
         completed: {
-          $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] },
+          $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] },
         },
-        archived: { $sum: { $cond: ["$archived", 1, 0] } },
-        starred: { $sum: { $cond: ["$starred", 1, 0] } },
-        averageProgress: { $avg: "$progress" },
-        totalAttachments: { $sum: { $size: "$attachments" } },
+        archived: { $sum: { $cond: ['$archived', 1, 0] } },
+        starred: { $sum: { $cond: ['$starred', 1, 0] } },
+        averageProgress: { $avg: '$progress' },
+        totalAttachments: { $sum: { $size: '$attachments' } },
       },
     },
   ]);
@@ -260,10 +242,10 @@ projectSchema.statics.searchProjects = function (query, teamId = null) {
       teamId ? { teamId: new mongoose.Types.ObjectId(teamId) } : {},
       {
         $or: [
-          { name: { $regex: query, $options: "i" } },
-          { description: { $regex: query, $options: "i" } },
-          { key: { $regex: query, $options: "i" } },
-          { tags: { $in: [new RegExp(query, "i")] } },
+          { name: { $regex: query, $options: 'i' } },
+          { description: { $regex: query, $options: 'i' } },
+          { key: { $regex: query, $options: 'i' } },
+          { tags: { $in: [new RegExp(query, 'i')] } },
         ],
       },
     ],
@@ -272,8 +254,6 @@ projectSchema.statics.searchProjects = function (query, teamId = null) {
   return this.find(searchQuery);
 };
 
-
-
-const Project = mongoose.model("Project", projectSchema);
+const Project = mongoose.model('Project', projectSchema);
 
 export default Project;

@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const userInfoSchema = new mongoose.Schema(
   {
@@ -15,7 +15,7 @@ const userInfoSchema = new mongoose.Schema(
     department: { type: String },
     workType: {
       type: String,
-      enum: ["Full-time", "Part-time", "Freelancer", "Intern"],
+      enum: ['Full-time', 'Part-time', 'Freelancer', 'Intern'],
     },
     timezone: { type: String },
     workingHours: {
@@ -27,7 +27,7 @@ const userInfoSchema = new mongoose.Schema(
     companyName: { type: String },
     companyWebsite: { type: String },
     industry: { type: String },
-    teamSize: { type: String, enum: ["1-10", "11-50", "51-100", "100+"] },
+    teamSize: { type: String, enum: ['1-10', '11-50', '51-100', '100+'] },
     officeLocation: { type: String },
 
     // Collaboration Details
@@ -49,7 +49,7 @@ const userInfoSchema = new mongoose.Schema(
     teamProjectName: { type: String },
     permissionsLevel: {
       type: String,
-      enum: ["admin", "manager", "employee", "member"],
+      enum: ['admin', 'manager', 'employee', 'member'],
     }, // updated enum
 
     // Role-based invite permissions (admin can toggle)
@@ -72,7 +72,7 @@ const userInfoSchema = new mongoose.Schema(
     deviceInfo: { type: mongoose.Schema.Types.Mixed },
     authProvider: {
       type: String,
-      enum: ["Google", "GitHub", "Microsoft", "Email"],
+      enum: ['Google', 'GitHub', 'Microsoft', 'Email'],
     },
     signupTimestamp: { type: Date, default: Date.now },
     ipAddress: { type: String },
@@ -81,6 +81,6 @@ const userInfoSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const UserInfo = mongoose.model("UserInfo", userInfoSchema);
+const UserInfo = mongoose.model('UserInfo', userInfoSchema);
 
 export default UserInfo;

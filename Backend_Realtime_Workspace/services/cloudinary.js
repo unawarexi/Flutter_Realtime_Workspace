@@ -1,8 +1,8 @@
-import { v2 as cloudinary } from "cloudinary";
-import * as dotenv from "dotenv";
-import multer from "multer";
-import { extensionToMimeType, allowedExtensions } from "../utils/extensions.js";
-import path from "path";
+import { v2 as cloudinary } from 'cloudinary';
+import * as dotenv from 'dotenv';
+import multer from 'multer';
+import { extensionToMimeType, allowedExtensions } from '../utils/extensions.js';
+import path from 'path';
 
 // Load environment variables
 dotenv.config();
@@ -28,17 +28,13 @@ const fileFilter = (req, file, cb) => {
   const isExtensionValid = allAllowedExtensions.includes(fileExtension);
 
   if (!isExtensionValid) {
-    cb(
-      new Error(
-        `Invalid file extension: ${fileExtension}. Please upload a supported file type.`
-      )
-    );
+    cb(new Error(`Invalid file extension: ${fileExtension}. Please upload a supported file type.`));
     return;
   }
 
   // Check MIME type with fallback for application/octet-stream
   const isMimeTypeValid = allowedMimeTypes.includes(file.mimetype);
-  const isGenericMimeType = file.mimetype === "application/octet-stream";
+  const isGenericMimeType = file.mimetype === 'application/octet-stream';
   const expectedMimeType = extensionToMimeType[fileExtension];
 
   if (isMimeTypeValid || (isGenericMimeType && expectedMimeType)) {
@@ -50,7 +46,7 @@ const fileFilter = (req, file, cb) => {
   } else {
     cb(
       new Error(
-        `Invalid file type. Received: ${file.mimetype} (${fileExtension}). Expected: ${expectedMimeType || "valid file MIME type"}.`
+        `Invalid file type. Received: ${file.mimetype} (${fileExtension}). Expected: ${expectedMimeType || 'valid file MIME type'}.`
       )
     );
   }
@@ -68,19 +64,19 @@ export const upload = multer({
 // Multer error handler middleware
 export function multerErrorHandler(err, req, res, next) {
   if (err instanceof multer.MulterError) {
-    if (err.code === "LIMIT_FILE_SIZE") {
+    if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
-        status: "error",
-        message: "File too large. Maximum size is 20MB.",
+        status: 'error',
+        message: 'File too large. Maximum size is 20MB.',
       });
     }
     return res.status(400).json({
-      status: "error",
+      status: 'error',
       message: err.message,
     });
   } else if (err) {
     return res.status(400).json({
-      status: "error",
+      status: 'error',
       message: err.message,
     });
   }
@@ -91,49 +87,16 @@ export function multerErrorHandler(err, req, res, next) {
  * Determine the resource type based on file extension
  */
 const getResourceType = (filename) => {
-  const ext = filename.toLowerCase().split(".").pop();
+  const ext = filename.toLowerCase().split('.').pop();
 
-  const imageExts = [
-    "jpg",
-    "jpeg",
-    "png",
-    "gif",
-    "webp",
-    "bmp",
-    "tiff",
-    "svg",
-    "ico",
-    "heic",
-    "heif",
-  ];
-  const videoExts = [
-    "mp4",
-    "avi",
-    "mov",
-    "wmv",
-    "flv",
-    "webm",
-    "mkv",
-    "m4v",
-    "3gp",
-    "ogv",
-  ];
-  const audioExts = [
-    "mp3",
-    "wav",
-    "flac",
-    "aac",
-    "ogg",
-    "wma",
-    "m4a",
-    "opus",
-    "aiff",
-  ];
+  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'svg', 'ico', 'heic', 'heif'];
+  const videoExts = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'm4v', '3gp', 'ogv'];
+  const audioExts = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a', 'opus', 'aiff'];
 
-  if (imageExts.includes(ext)) return "image";
-  if (videoExts.includes(ext)) return "video";
-  if (audioExts.includes(ext)) return "video"; // Cloudinary treats audio as video resource type
-  return "raw"; // For documents and other files
+  if (imageExts.includes(ext)) return 'image';
+  if (videoExts.includes(ext)) return 'video';
+  if (audioExts.includes(ext)) return 'video'; // Cloudinary treats audio as video resource type
+  return 'raw'; // For documents and other files
 };
 
 /**
@@ -144,22 +107,18 @@ const getResourceType = (filename) => {
  * @returns Promise resolving to the Cloudinary upload result with metadata
  */
 
-export const uploadToCloudinary = async (
-  fileBuffer,
-  originalName,
-  folder = "/projects/workspace" 
-) => {
+export const uploadToCloudinary = async (fileBuffer, originalName, folder = '/projects/workspace') => {
   try {
     const resourceType = getResourceType(originalName);
-    const fileExtension = originalName.split(".").pop();
-    const fileName = originalName.split(".").slice(0, -1).join(".");
+    const fileExtension = originalName.split('.').pop();
+    const fileName = originalName.split('.').slice(0, -1).join('.');
 
-    console.log("Upload parameters:", {
+    console.log('Upload parameters:', {
       originalName,
       folder,
       resourceType,
       fileExtension,
-      fileName
+      fileName,
     });
 
     const uploadOptions = {
@@ -171,33 +130,30 @@ export const uploadToCloudinary = async (
     };
 
     // Add transformations for images and videos
-    if (resourceType === "image") {
+    if (resourceType === 'image') {
       uploadOptions.transformation = [
-        { width: 1000, height: 1000, crop: "limit" },
-        { quality: "auto" },
-        { fetch_format: "auto" },
+        { width: 1000, height: 1000, crop: 'limit' },
+        { quality: 'auto' },
+        { fetch_format: 'auto' },
       ];
-    } else if (resourceType === "video") {
-      uploadOptions.transformation = [
-        { quality: "auto" },
-        { fetch_format: "auto" },
-      ];
+    } else if (resourceType === 'video') {
+      uploadOptions.transformation = [{ quality: 'auto' }, { fetch_format: 'auto' }];
     }
 
-    console.log("Cloudinary upload options:", uploadOptions);
+    console.log('Cloudinary upload options:', uploadOptions);
 
     // Upload buffer directly to Cloudinary
     const result = await new Promise((resolve, reject) => {
       cloudinary.uploader
         .upload_stream(uploadOptions, (error, result) => {
           if (error) {
-            console.error("Cloudinary upload error:", error);
+            console.error('Cloudinary upload error:', error);
             reject(error);
           } else {
-            console.log("Cloudinary upload success:", {
+            console.log('Cloudinary upload success:', {
               public_id: result.public_id,
               secure_url: result.secure_url,
-              folder: result.folder
+              folder: result.folder,
             });
             resolve(result);
           }
@@ -207,7 +163,7 @@ export const uploadToCloudinary = async (
 
     // Validate that we got a secure_url
     if (!result.secure_url) {
-      throw new Error("Cloudinary upload succeeded but no secure_url returned");
+      throw new Error('Cloudinary upload succeeded but no secure_url returned');
     }
 
     // Return comprehensive file information
@@ -226,7 +182,7 @@ export const uploadToCloudinary = async (
       filename: originalName,
     };
   } catch (error) {
-    console.error("Cloudinary upload error:", error);
+    console.error('Cloudinary upload error:', error);
     throw error;
   }
 };
@@ -237,17 +193,14 @@ export const uploadToCloudinary = async (
  * @param resourceType - Type of resource (image, video, raw)
  * @returns Promise resolving to the deletion result
  */
-export const deleteFromCloudinary = async (
-  publicId,
-  resourceType = "image"
-) => {
+export const deleteFromCloudinary = async (publicId, resourceType = 'image') => {
   try {
     const result = await cloudinary.uploader.destroy(publicId, {
       resource_type: resourceType,
     });
     return result;
   } catch (error) {
-    console.error("Error deleting from Cloudinary:", error);
+    console.error('Error deleting from Cloudinary:', error);
     throw error;
   }
 };
@@ -259,17 +212,13 @@ export const deleteFromCloudinary = async (
  * @param transformations - Array of transformation objects
  * @returns Optimized file URL
  */
-export const getOptimizedFileUrl = (
-  publicId,
-  resourceType = "image",
-  transformations = []
-) => {
+export const getOptimizedFileUrl = (publicId, resourceType = 'image', transformations = []) => {
   return cloudinary.url(publicId, {
     resource_type: resourceType,
     ...transformations,
     secure: true,
-    quality: "auto",
-    fetch_format: "auto",
+    quality: 'auto',
+    fetch_format: 'auto',
   });
 };
 
@@ -279,14 +228,14 @@ export const getOptimizedFileUrl = (
  * @param resourceType - Type of resource
  * @returns File metadata
  */
-export const getFileMetadata = async (publicId, resourceType = "image") => {
+export const getFileMetadata = async (publicId, resourceType = 'image') => {
   try {
     const result = await cloudinary.api.resource(publicId, {
       resource_type: resourceType,
     });
     return result;
   } catch (error) {
-    console.error("Error getting file metadata:", error);
+    console.error('Error getting file metadata:', error);
     throw error;
   }
 };
