@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_realtime_workspace/shared/styles/colors.dart';
 import 'package:flutter_realtime_workspace/core/utils/helpers/helper_functions.dart';
+import 'package:timezone/data/latest.dart' as tzdata;
+import 'widgets/select_participants_sheet.dart';
+import 'package:flutter_realtime_workspace/features/collaboration/presentation/widgets/date_timezone.dart';
+import 'package:flutter_realtime_workspace/features/collaboration/presentation/widgets/add_attachements.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_realtime_workspace/global/schedule_provider.dart';
+import 'package:flutter_realtime_workspace/shared/common/toast_alerts.dart';
 
 class ScheduleMeet extends StatefulWidget {
   const ScheduleMeet({super.key});
@@ -29,7 +36,8 @@ class _ScheduleMeetState extends State<ScheduleMeet>
   String _repeatOption = 'None';
   String _meetingType = 'Virtual';
   String _reminderTime = '15 minutes before';
-  List<String> _selectedParticipants = [];
+  String _selectedTimezone = 'UTC';
+  List<Map<String, String>> _selectedParticipants = [];
   List<String> _attachments = [];
 
   final List<String> _durationOptions = [
@@ -45,11 +53,10 @@ class _ScheduleMeetState extends State<ScheduleMeet>
     '5 minutes before', '15 minutes before', '30 minutes before', 
     '1 hour before', '2 hours before', '1 day before'
   ];
-  
-  final List<String> _availableParticipants = [
-    'John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Williams',
-    'David Brown', 'Lisa Davis', 'Tom Wilson', 'Emily Taylor'
-  ];
+
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -81,6 +88,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
 
     _fadeController.forward();
     _slideController.forward();
+    tzdata.initializeTimeZones();
   }
 
   @override
@@ -97,56 +105,60 @@ class _ScheduleMeetState extends State<ScheduleMeet>
   @override
   Widget build(BuildContext context) {
     final isDarkMode = THelperFunctions.isDarkMode(context);
-    
-    return Scaffold(
-      backgroundColor: isDarkMode ? TColors.backgroundDarkAlt : TColors.backgroundLight,
-      appBar: _buildAppBar(isDarkMode),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: Form(
-            key: _formKey,
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeaderSection(isDarkMode),
-                        const SizedBox(height: 24),
-                        _buildMeetingDetailsSection(isDarkMode),
-                        const SizedBox(height: 20),
-                        _buildDateTimeSection(isDarkMode),
-                        const SizedBox(height: 20),
-                        _buildDurationRepeatSection(isDarkMode),
-                        const SizedBox(height: 20),
-                        _buildParticipantsSection(isDarkMode),
-                        const SizedBox(height: 20),
-                        _buildMeetingTypeSection(isDarkMode),
-                        const SizedBox(height: 20),
-                        _buildLocationSection(isDarkMode),
-                        const SizedBox(height: 20),
-                        _buildDescriptionSection(isDarkMode),
-                        const SizedBox(height: 20),
-                        _buildNotificationSection(isDarkMode),
-                        const SizedBox(height: 20),
-                        _buildAttachmentsSection(isDarkMode),
-                        const SizedBox(height: 30),
-                        _buildScheduleButton(isDarkMode),
-                        const SizedBox(height: 20),
-                      ],
+    return Consumer(
+      builder: (context, ref, _) {
+        return Scaffold(
+          key: _scaffoldMessengerKey,
+          backgroundColor: isDarkMode ? TColors.backgroundDarkAlt : TColors.backgroundLight,
+          appBar: _buildAppBar(isDarkMode),
+          body: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Form(
+                key: _formKey,
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeaderSection(isDarkMode),
+                            const SizedBox(height: 12),
+                            _buildMeetingDetailsSection(isDarkMode),
+                            const SizedBox(height: 12),
+                            _buildDateTimeSection(isDarkMode),
+                            const SizedBox(height: 12),
+                            _buildDurationRepeatSection(isDarkMode),
+                            const SizedBox(height: 12),
+                            _buildParticipantsSection(isDarkMode),
+                            const SizedBox(height: 12),
+                            _buildMeetingTypeSection(isDarkMode),
+                            const SizedBox(height: 12),
+                            _buildLocationSection(isDarkMode),
+                            const SizedBox(height: 12),
+                            _buildDescriptionSection(isDarkMode),
+                            const SizedBox(height: 12),
+                            _buildNotificationSection(isDarkMode),
+                            const SizedBox(height: 12),
+                            _buildAttachmentsSection(isDarkMode),
+                            const SizedBox(height: 16),
+                            _buildScheduleButton(isDarkMode, ref),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -155,10 +167,10 @@ class _ScheduleMeetState extends State<ScheduleMeet>
       backgroundColor: isDarkMode ? TColors.backgroundDarkAlt : TColors.backgroundLight,
       elevation: 0,
       leading: Container(
-        margin: const EdgeInsets.all(8),
+        margin: const EdgeInsets.all(4), // reduced margin
         decoration: BoxDecoration(
           color: isDarkMode ? TColors.cardColorDark : Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8), // reduced radius
           border: Border.all(
             color: isDarkMode ? TColors.borderDark : TColors.borderLight,
             width: 0.8,
@@ -168,7 +180,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
           icon: Icon(
             Icons.arrow_back_ios_rounded,
             color: isDarkMode ? Colors.white : TColors.backgroundDark,
-            size: 18,
+            size: 14, // reduced icon size
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -177,17 +189,18 @@ class _ScheduleMeetState extends State<ScheduleMeet>
         'Schedule Meeting',
         style: TextStyle(
           color: isDarkMode ? Colors.white : TColors.backgroundDark,
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
+          fontSize: 16, // reduced font size
+          fontWeight: FontWeight.bold,
         ),
       ),
       centerTitle: true,
+      toolbarHeight: 40, // reduced height
       actions: [
         Container(
-          margin: const EdgeInsets.all(8),
+          margin: const EdgeInsets.all(4), // reduced margin
           decoration: BoxDecoration(
             color: isDarkMode ? TColors.cardColorDark : Colors.white,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(8), // reduced radius
             border: Border.all(
               color: isDarkMode ? TColors.borderDark : TColors.borderLight,
               width: 0.8,
@@ -197,7 +210,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
             icon: Icon(
               Icons.calendar_month_outlined,
               color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-              size: 18,
+              size: 14, // reduced icon size
             ),
             onPressed: () {
               // Show calendar conflicts
@@ -211,7 +224,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
 
   Widget _buildHeaderSection(bool isDarkMode) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10), // reduced padding
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDarkMode
@@ -220,7 +233,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12), // reduced radius
         border: Border.all(
           color: (isDarkMode ? TColors.buttonPrimary : TColors.buttonPrimaryLight).withOpacity(0.2),
         ),
@@ -228,19 +241,19 @@ class _ScheduleMeetState extends State<ScheduleMeet>
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 32, // reduced size
+            height: 32,
             decoration: BoxDecoration(
               color: (isDarkMode ? TColors.buttonPrimary : TColors.buttonPrimaryLight).withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8), // reduced radius
             ),
             child: Icon(
               Icons.schedule_rounded,
               color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-              size: 24,
+              size: 16, // reduced icon size
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8), // reduced spacing
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,16 +261,16 @@ class _ScheduleMeetState extends State<ScheduleMeet>
                 Text(
                   'Create New Meeting',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 12, // reduced font size
+                    fontWeight: FontWeight.bold,
                     color: isDarkMode ? Colors.white : TColors.backgroundDark,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2), // reduced spacing
                 Text(
                   'Schedule meetings with your team effortlessly',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 9, // reduced font size
                     color: isDarkMode ? TColors.textSecondaryDark : TColors.textTertiaryLight,
                     fontWeight: FontWeight.w500,
                   ),
@@ -298,28 +311,14 @@ class _ScheduleMeetState extends State<ScheduleMeet>
     return _buildSection(
       title: 'Date & Time',
       isDarkMode: isDarkMode,
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildDateTimeTile(
-              title: 'Date',
-              value: '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-              icon: Icons.calendar_today_outlined,
-              isDarkMode: isDarkMode,
-              onTap: () => _selectDate(),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildDateTimeTile(
-              title: 'Time',
-              value: _selectedTime.format(context),
-              icon: Icons.access_time_rounded,
-              isDarkMode: isDarkMode,
-              onTap: () => _selectTime(),
-            ),
-          ),
-        ],
+      child: DateTimeTimezonePicker(
+        selectedDate: _selectedDate,
+        selectedTime: _selectedTime,
+        selectedTimezone: _selectedTimezone,
+        isDarkMode: isDarkMode,
+        onDateChanged: (date) => setState(() => _selectedDate = date),
+        onTimeChanged: (time) => setState(() => _selectedTime = time),
+        onTimezoneChanged: (tz) => setState(() => _selectedTimezone = tz),
       ),
     );
   }
@@ -474,59 +473,142 @@ class _ScheduleMeetState extends State<ScheduleMeet>
     return _buildSection(
       title: 'Attachments',
       isDarkMode: isDarkMode,
-      child: Column(
-        children: [
-          _buildAttachmentButton(isDarkMode),
-          if (_attachments.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _buildAttachmentsList(isDarkMode),
-          ],
-        ],
+      child: AddAttachmentsSection(
+        attachments: _attachments,
+        isDarkMode: isDarkMode,
+        onChanged: (newList) => setState(() => _attachments = newList),
       ),
     );
   }
 
-  Widget _buildScheduleButton(bool isDarkMode) {
+  Widget _buildScheduleButton(bool isDarkMode, WidgetRef ref) {
     return Container(
       width: double.infinity,
+      height: 36,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: (isDarkMode ? TColors.buttonPrimary : TColors.buttonPrimaryLight).withOpacity(0.3),
-            blurRadius: 12,
+            color: (isDarkMode ? TColors.buttonPrimary : TColors.buttonPrimaryLight).withOpacity(0.15),
+            blurRadius: 6,
             spreadRadius: 0,
-            offset: const Offset(0, 6),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: ElevatedButton(
-        onPressed: () => _scheduleMeeting(),
+        onPressed: _isSubmitting ? null : () => _scheduleMeeting(ref),
         style: ElevatedButton.styleFrom(
           backgroundColor: isDarkMode ? TColors.buttonPrimary : TColors.buttonPrimaryLight,
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: EdgeInsets.zero,
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.schedule_send_rounded,
-              size: 20,
-            ),
-            SizedBox(width: 8),
-            Text(
-              'Schedule Meeting',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+        child: _isSubmitting
+            ? const SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.schedule_send_rounded,
+                    size: 14,
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    'Schedule Meeting',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+      ),
+    );
+  }
+
+  void _scheduleMeeting(WidgetRef ref) async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isSubmitting = true);
+
+      final meetingData = <String, dynamic>{
+        'meetingTitle': _titleController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'agenda': _descriptionController.text.trim(),
+        'organizer': {},
+        'meetingDate': _selectedDate.toIso8601String(),
+        'meetingTime': {
+          'start': _selectedTime.format(context),
+        },
+        'duration': _parseDuration(_duration),
+        'timezone': _selectedTimezone,
+        'repeatOption': _repeatOption,
+        'meetingType': _meetingType.toLowerCase(),
+        'location': _meetingType == 'Virtual'
+            ? {'link': _linkController.text.trim()}
+            : {'address': _locationController.text.trim()},
+        'participants': _selectedParticipants.map((p) => {
+          'name': p['fullName'],
+          'email': p['email'],
+        }).toList(),
+        'reminderSettings': {
+          'enabled': true,
+          'reminderTime': _reminderTime,
+          'notificationMethods': ['push', 'email'],
+        },
+        'attachments': _attachments,
+      };
+
+      dynamic result;
+      try {
+        result = await ref.read(scheduleProvider.notifier).createMeeting(meetingData);
+      } catch (e) {
+        setState(() => _isSubmitting = false);
+        context.showToast(
+          "An unexpected error occurred. Please try again.",
+          type: ToastType.error,
+        );
+        return;
+      }
+
+      setState(() => _isSubmitting = false);
+
+      if (result != null && result['success'] == true) {
+        context.showToast(
+          'Meeting "${_titleController.text}" has been scheduled successfully.',
+          type: ToastType.success,
+        );
+        Future.delayed(const Duration(milliseconds: 800), () {
+          if (mounted) Navigator.pop(context);
+        });
+      } else {
+        context.showToast(
+          result?['message'] ?? 'Failed to schedule meeting. Please try again.',
+          type: ToastType.error,
+        );
+      }
+    }
+  }
+
+  void _addToCalendar() {
+    HapticFeedback.lightImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Meeting added to calendar'),
+        backgroundColor: TColors.buttonPrimary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
     );
@@ -539,10 +621,10 @@ class _ScheduleMeetState extends State<ScheduleMeet>
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: isDarkMode ? TColors.cardColorDark : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isDarkMode ? TColors.borderDark : TColors.borderLight,
           width: 0.8,
@@ -550,7 +632,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
         boxShadow: [
           BoxShadow(
             color: (isDarkMode ? Colors.black : Colors.grey).withOpacity(0.03),
-            blurRadius: 8,
+            blurRadius: 4,
             spreadRadius: 0,
             offset: const Offset(0, 2),
           ),
@@ -562,12 +644,12 @@ class _ScheduleMeetState extends State<ScheduleMeet>
           Text(
             title,
             style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
               color: isDarkMode ? Colors.white : TColors.backgroundDark,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           child,
         ],
       ),
@@ -590,7 +672,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
       maxLines: maxLines,
       style: TextStyle(
         color: isDarkMode ? Colors.white : TColors.backgroundDark,
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: FontWeight.w500,
       ),
       decoration: InputDecoration(
@@ -599,98 +681,43 @@ class _ScheduleMeetState extends State<ScheduleMeet>
         prefixIcon: Icon(
           icon,
           color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-          size: 20,
+          size: 14,
         ),
         suffixIcon: suffixIcon,
         labelStyle: TextStyle(
           color: isDarkMode ? TColors.textSecondaryDark : TColors.textTertiaryLight,
-          fontSize: 12,
+          fontSize: 10,
           fontWeight: FontWeight.w600,
         ),
         hintStyle: TextStyle(
           color: isDarkMode ? TColors.textTertiaryLight : TColors.textSecondaryDark,
-          fontSize: 13,
+          fontSize: 10,
           fontWeight: FontWeight.w400,
         ),
         filled: true,
         fillColor: isDarkMode ? TColors.backgroundDarkAlt : const Color(0xFFF8FAFC),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
             color: isDarkMode ? TColors.borderDark : TColors.borderLight,
             width: 0.8,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
             color: isDarkMode ? TColors.borderDark : TColors.borderLight,
             width: 0.8,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
             color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-            width: 1.5,
+            width: 1.2,
           ),
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-      ),
-    );
-  }
-
-  Widget _buildDateTimeTile({
-    required String title,
-    required String value,
-    required IconData icon,
-    required bool isDarkMode,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDarkMode ? TColors.backgroundDarkAlt : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isDarkMode ? TColors.borderDark : TColors.borderLight,
-            width: 0.8,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  icon,
-                  color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-                  size: 16,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode ? TColors.textSecondaryDark : TColors.textTertiaryLight,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isDarkMode ? Colors.white : TColors.backgroundDark,
-              ),
-            ),
-          ],
-        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       ),
     );
   }
@@ -711,41 +738,41 @@ class _ScheduleMeetState extends State<ScheduleMeet>
         prefixIcon: Icon(
           icon,
           color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-          size: 20,
+          size: 14,
         ),
         labelStyle: TextStyle(
           color: isDarkMode ? TColors.textSecondaryDark : TColors.textTertiaryLight,
-          fontSize: 12,
+          fontSize: 10,
           fontWeight: FontWeight.w600,
         ),
         filled: true,
         fillColor: isDarkMode ? TColors.backgroundDarkAlt : const Color(0xFFF8FAFC),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
             color: isDarkMode ? TColors.borderDark : TColors.borderLight,
             width: 0.8,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
             color: isDarkMode ? TColors.borderDark : TColors.borderLight,
             width: 0.8,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
             color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-            width: 1.5,
+            width: 1.2,
           ),
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       ),
       style: TextStyle(
         color: isDarkMode ? Colors.white : TColors.backgroundDark,
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: FontWeight.w500,
       ),
       dropdownColor: isDarkMode ? TColors.cardColorDark : Colors.white,
@@ -756,7 +783,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
             item,
             style: TextStyle(
               color: isDarkMode ? Colors.white : TColors.backgroundDark,
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -767,12 +794,26 @@ class _ScheduleMeetState extends State<ScheduleMeet>
 
   Widget _buildParticipantSelector(bool isDarkMode) {
     return GestureDetector(
-      onTap: () => _showParticipantSelector(isDarkMode),
+      onTap: () async {
+        final selected = await showModalBottomSheet<List<Map<String, String>>>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => SelectParticipantsSheet(
+            initiallySelected: _selectedParticipants,
+          ),
+        );
+        if (selected != null) {
+          setState(() {
+            _selectedParticipants = selected;
+          });
+        }
+      },
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isDarkMode ? TColors.backgroundDarkAlt : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isDarkMode ? TColors.borderDark : TColors.borderLight,
             width: 0.8,
@@ -783,9 +824,9 @@ class _ScheduleMeetState extends State<ScheduleMeet>
             Icon(
               Icons.people_outline_rounded,
               color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-              size: 20,
+              size: 14,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 6),
             Expanded(
               child: Text(
                 _selectedParticipants.isEmpty
@@ -795,7 +836,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
                   color: _selectedParticipants.isEmpty
                       ? (isDarkMode ? TColors.textTertiaryLight : TColors.textSecondaryDark)
                       : (isDarkMode ? Colors.white : TColors.backgroundDark),
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -803,7 +844,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
             Icon(
               Icons.arrow_forward_ios_rounded,
               color: isDarkMode ? TColors.textSecondaryDark : TColors.textTertiaryLight,
-              size: 16,
+              size: 12,
             ),
           ],
         ),
@@ -813,14 +854,14 @@ class _ScheduleMeetState extends State<ScheduleMeet>
 
   Widget _buildSelectedParticipants(bool isDarkMode) {
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 6,
+      runSpacing: 6,
       children: _selectedParticipants.map((participant) {
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: (isDarkMode ? TColors.buttonPrimary : TColors.buttonPrimaryLight).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: (isDarkMode ? TColors.buttonPrimary : TColors.buttonPrimaryLight).withOpacity(0.3),
             ),
@@ -829,14 +870,14 @@ class _ScheduleMeetState extends State<ScheduleMeet>
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                participant,
+                participant['fullName'] ?? '',
                 style: TextStyle(
                   color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               GestureDetector(
                 onTap: () {
                   setState(() {
@@ -846,7 +887,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
                 child: Icon(
                   Icons.close_rounded,
                   color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-                  size: 14,
+                  size: 12,
                 ),
               ),
             ],
@@ -867,17 +908,17 @@ class _ScheduleMeetState extends State<ScheduleMeet>
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(8), // reduced padding
         decoration: BoxDecoration(
           color: isSelected
               ? (isDarkMode ? TColors.buttonPrimary : TColors.buttonPrimaryLight).withOpacity(0.1)
               : (isDarkMode ? TColors.backgroundDarkAlt : const Color(0xFFF8FAFC)),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8), // reduced radius
           border: Border.all(
             color: isSelected
                 ? (isDarkMode ? TColors.buttonPrimary : TColors.buttonPrimaryLight)
                 : (isDarkMode ? TColors.borderDark : TColors.borderLight),
-            width: isSelected ? 1.5 : 0.8,
+            width: isSelected ? 1.2 : 0.8, // reduced width
           ),
         ),
         child: Column(
@@ -887,305 +928,22 @@ class _ScheduleMeetState extends State<ScheduleMeet>
               color: isSelected
                   ? (isDarkMode ? TColors.lightBlue : TColors.buttonPrimary)
                   : (isDarkMode ? TColors.textSecondaryDark : TColors.textTertiaryLight),
-              size: 24,
+              size: 16, // reduced icon size
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4), // reduced spacing
             Text(
               title,
               style: TextStyle(
                 color: isSelected
                     ? (isDarkMode ? Colors.white : TColors.backgroundDark)
                     : (isDarkMode ? TColors.textSecondaryDark : TColors.textTertiaryLight),
-                fontSize: 12,
+                fontSize: 10, // reduced font size
                 fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildAttachmentButton(bool isDarkMode) {
-    return GestureDetector(
-      onTap: () => _addAttachment(),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDarkMode ? TColors.backgroundDarkAlt : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isDarkMode ? TColors.borderDark : TColors.borderLight,
-            width: 0.8,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.attach_file_rounded,
-              color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Add Attachment',
-              style: TextStyle(
-                color: isDarkMode ? Colors.white : TColors.backgroundDark,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAttachmentsList(bool isDarkMode) {
-    return Column(
-      children: _attachments.map((attachment) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: (isDarkMode
-                    ? TColors.buttonPrimary
-                    : TColors.buttonPrimaryLight)
-                .withOpacity(0.05),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: (isDarkMode
-                      ? TColors.buttonPrimary
-                      : TColors.buttonPrimaryLight)
-                  .withOpacity(0.2),
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.insert_drive_file_outlined,
-                color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-                size: 18,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  attachment,
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white : TColors.backgroundDark,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _attachments.remove(attachment);
-                  });
-                },
-                child: Icon(
-                  Icons.close_rounded,
-                  color: isDarkMode
-                      ? TColors.textSecondaryDark
-                      : TColors.textTertiaryLight,
-                  size: 16,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  // Date and Time Pickers
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: TColors.buttonPrimary,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
-  }
-
-  Future<void> _selectTime() async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: TColors.buttonPrimary,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
-  }
-
-  // Participant Selection Dialog
-  void _showParticipantSelector(bool isDarkMode) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Container(
-              height: MediaQuery.of(context).size.height * 0.7,
-              decoration: BoxDecoration(
-                color: isDarkMode ? TColors.cardColorDark : Colors.white,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Column(
-                children: [
-                  // Handle bar
-                  Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color:
-                          isDarkMode ? TColors.borderDark : TColors.borderLight,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Select Participants',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: isDarkMode
-                                ? Colors.white
-                                : TColors.backgroundDark,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(
-                            'Done',
-                            style: TextStyle(
-                              color: isDarkMode
-                                  ? TColors.lightBlue
-                                  : TColors.buttonPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Participants list
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: _availableParticipants.length,
-                      itemBuilder: (context, index) {
-                        final participant = _availableParticipants[index];
-                        final isSelected =
-                            _selectedParticipants.contains(participant);
-
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          decoration: BoxDecoration(
-                            color: isDarkMode
-                                ? TColors.backgroundDarkAlt
-                                : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isDarkMode
-                                  ? TColors.borderDark
-                                  : TColors.borderLight,
-                              width: 0.8,
-                            ),
-                          ),
-                          child: CheckboxListTile(
-                            value: isSelected,
-                            onChanged: (bool? value) {
-                              setModalState(() {
-                                if (value == true) {
-                                  _selectedParticipants.add(participant);
-                                } else {
-                                  _selectedParticipants.remove(participant);
-                                }
-                              });
-                              setState(() {}); // Update parent state
-                            },
-                            title: Text(
-                              participant,
-                              style: TextStyle(
-                                color: isDarkMode
-                                    ? Colors.white
-                                    : TColors.backgroundDark,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            subtitle: Text(
-                              '${participant.toLowerCase().replaceAll(' ', '.')}@company.com',
-                              style: TextStyle(
-                                color: isDarkMode
-                                    ? TColors.textSecondaryDark
-                                    : TColors.textTertiaryLight,
-                                fontSize: 12,
-                              ),
-                            ),
-                            activeColor: isDarkMode
-                                ? TColors.lightBlue
-                                : TColors.buttonPrimary,
-                            checkColor: Colors.white,
-                            controlAffinity: ListTileControlAffinity.trailing,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
     );
   }
 
@@ -1310,202 +1068,14 @@ class _ScheduleMeetState extends State<ScheduleMeet>
     );
   }
 
-  // Add Attachment
-  void _addAttachment() {
-    // This would typically open file picker
-    // For demo purposes, adding dummy attachments
-    showDialog(
-      context: context,
-      builder: (context) {
-        final isDarkMode = THelperFunctions.isDarkMode(context);
-        return AlertDialog(
-          backgroundColor: isDarkMode ? TColors.cardColorDark : Colors.white,
-          title: Text(
-            'Add Attachment',
-            style: TextStyle(
-              color: isDarkMode ? Colors.white : TColors.backgroundDark,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Icon(
-                  Icons.insert_drive_file_outlined,
-                  color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-                ),
-                title: Text(
-                  'Choose from Files',
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white : TColors.backgroundDark,
-                  ),
-                ),
-                onTap: () {
-                  setState(() {
-                    _attachments.add('Meeting_Agenda.pdf');
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.camera_alt_outlined,
-                  color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-                ),
-                title: Text(
-                  'Take Photo',
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white : TColors.backgroundDark,
-                  ),
-                ),
-                onTap: () {
-                  setState(() {
-                    _attachments.add(
-                        'photo_${DateTime.now().millisecondsSinceEpoch}.jpg');
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: isDarkMode
-                      ? TColors.textSecondaryDark
-                      : TColors.textTertiaryLight,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Schedule Meeting Function
-  void _scheduleMeeting() {
-    if (_formKey.currentState!.validate()) {
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          final isDarkMode = THelperFunctions.isDarkMode(context);
-          return AlertDialog(
-            backgroundColor: isDarkMode ? TColors.cardColorDark : Colors.white,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Scheduling meeting...',
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white : TColors.backgroundDark,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-
-      // Simulate API call
-      Future.delayed(const Duration(seconds: 2), () {
-        Navigator.pop(context); // Close loading dialog
-
-        // Show success dialog
-        showDialog(
-          context: context,
-          builder: (context) {
-            final isDarkMode = THelperFunctions.isDarkMode(context);
-            return AlertDialog(
-              backgroundColor:
-                  isDarkMode ? TColors.cardColorDark : Colors.white,
-              title: Row(
-                children: [
-                  const Icon(
-                    Icons.check_circle_outline,
-                    color: Colors.green,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Success!',
-                    style: TextStyle(
-                      color: isDarkMode ? Colors.white : TColors.backgroundDark,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              content: Text(
-                'Meeting "${_titleController.text}" has been scheduled successfully.',
-                style: TextStyle(
-                  color: isDarkMode
-                      ? TColors.textSecondaryDark
-                      : TColors.textTertiaryLight,
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Close success dialog
-                    Navigator.pop(context); // Return to previous screen
-                  },
-                  child: Text(
-                    'Done',
-                    style: TextStyle(
-                      color: isDarkMode
-                          ? TColors.lightBlue
-                          : TColors.buttonPrimary,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    // Add to calendar functionality would go here
-                    _addToCalendar();
-                  },
-                  child: Text(
-                    'Add to Calendar',
-                    style: TextStyle(
-                      color: isDarkMode
-                          ? TColors.lightBlue
-                          : TColors.buttonPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      });
+  // Helper to parse duration string to int minutes
+  int _parseDuration(String durationStr) {
+    if (durationStr.contains('hour')) {
+      final hours = int.tryParse(durationStr.split(' ')[0]) ?? 1;
+      return hours * 60;
+    } else if (durationStr.contains('minutes')) {
+      return int.tryParse(durationStr.split(' ')[0]) ?? 15;
     }
-  }
-
-  // Add to Calendar (placeholder)
-  void _addToCalendar() {
-    HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Meeting added to calendar'),
-        backgroundColor: TColors.buttonPrimary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
+    return 60;
   }
 }
