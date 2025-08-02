@@ -15,6 +15,7 @@ import userInfoRoutes from './routes/userInfoRoutes.js';
 import fcmRoutes from './routes/fcmRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
+import scheduleMeetRoutes from './routes/scheduleMeet-Routes.js';
 
 // Load environment variables
 dotenv.config();
@@ -52,6 +53,7 @@ app.use('/api/v1/userinfo', userInfoRoutes);
 app.use('/api/v1/fcm', fcmRoutes);
 app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/teams', teamRoutes);
+app.use('/api/v1/schedule-meet', scheduleMeetRoutes);
 
 // Error handling middleware
 app.use((req, res, next) => {
