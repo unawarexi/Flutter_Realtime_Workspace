@@ -9,6 +9,7 @@ import 'package:flutter_realtime_workspace/features/collaboration/presentation/w
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_realtime_workspace/global/schedule_provider.dart';
 import 'package:flutter_realtime_workspace/shared/common/toast_alerts.dart';
+import 'package:flutter_realtime_workspace/core/utils/constants/variables.dart';
 
 class ScheduleMeet extends StatefulWidget {
   const ScheduleMeet({super.key});
@@ -32,27 +33,13 @@ class _ScheduleMeetState extends State<ScheduleMeet>
 
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
   TimeOfDay _selectedTime = TimeOfDay.now();
-  String _duration = '60 minutes';
-  String _repeatOption = 'None';
+  String _duration = kMeetingDurationOptions[3]; // '60 minutes'
+  String _repeatOption = kMeetingRepeatOptions[0]; // 'None'
   String _meetingType = 'Virtual';
-  String _reminderTime = '15 minutes before';
+  String _reminderTime = kMeetingReminderOptions[1]; // '15 minutes before'
   String _selectedTimezone = 'UTC';
   List<Map<String, String>> _selectedParticipants = [];
   List<String> _attachments = [];
-
-  final List<String> _durationOptions = [
-    '15 minutes', '30 minutes', '45 minutes', '60 minutes', 
-    '90 minutes', '2 hours', '3 hours', '4 hours'
-  ];
-  
-  final List<String> _repeatOptions = [
-    'None', 'Daily', 'Weekly', 'Bi-weekly', 'Monthly'
-  ];
-  
-  final List<String> _reminderOptions = [
-    '5 minutes before', '15 minutes before', '30 minutes before', 
-    '1 hour before', '2 hours before', '1 day before'
-  ];
 
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -333,7 +320,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
             child: _buildDropdownField(
               label: 'Duration',
               value: _duration,
-              items: _durationOptions,
+              items: kMeetingDurationOptions,
               icon: Icons.timer_outlined,
               isDarkMode: isDarkMode,
               onChanged: (value) => setState(() => _duration = value!),
@@ -344,7 +331,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
             child: _buildDropdownField(
               label: 'Repeat',
               value: _repeatOption,
-              items: _repeatOptions,
+              items: kMeetingRepeatOptions,
               icon: Icons.repeat_rounded,
               isDarkMode: isDarkMode,
               onChanged: (value) => setState(() => _repeatOption = value!),
@@ -461,7 +448,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
       child: _buildDropdownField(
         label: 'Reminder',
         value: _reminderTime,
-        items: _reminderOptions,
+        items: kMeetingReminderOptions,
         icon: Icons.notifications_outlined,
         isDarkMode: isDarkMode,
         onChanged: (value) => setState(() => _reminderTime = value!),
@@ -545,7 +532,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
         'meetingTitle': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
         'agenda': _descriptionController.text.trim(),
-        'organizer': {},
+        // 'organizer': {}, // REMOVE: backend uses authenticated user
         'meetingDate': _selectedDate.toIso8601String(),
         'meetingTime': {
           'start': _selectedTime.format(context),
@@ -553,13 +540,14 @@ class _ScheduleMeetState extends State<ScheduleMeet>
         'duration': _parseDuration(_duration),
         'timezone': _selectedTimezone,
         'repeatOption': _repeatOption,
-        'meetingType': _meetingType.toLowerCase(),
+        'meetingType': _meetingType,
         'location': _meetingType == 'Virtual'
-            ? {'link': _linkController.text.trim()}
+            ? {'meetingLink': _linkController.text.trim()}
             : {'address': _locationController.text.trim()},
+        // Only send userID or email for each participant
         'participants': _selectedParticipants.map((p) => {
-          'name': p['fullName'],
-          'email': p['email'],
+          if (p['userID'] != null) 'userID': p['userID'],
+          if (p['email'] != null) 'email': p['email'],
         }).toList(),
         'reminderSettings': {
           'enabled': true,
