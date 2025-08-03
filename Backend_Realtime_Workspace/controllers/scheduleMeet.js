@@ -1,15 +1,29 @@
 import ScheduleMeet from '../models/scheduleMeet-Model.js';
 import mongoose from 'mongoose';
+import UserInfo from '../models/userInfoModel.js';
+import { uploadToCloudinary } from '../services/cloudinary.js'; // <-- Import Cloudinary upload
 
 class ScheduleMeetController {
   // ======================== CREATE OPERATIONS ========================
   static async createMeeting(req, res) {
     try {
-      const {
+      // Get authenticated user info (organizer)
+      const organizerUID = req.user?.uid;
+      if (!organizerUID) {
+        return res.status(401).json({ success: false, message: 'Unauthorized: Organizer not found' });
+      }
+
+      // Fetch organizer details from UserInfo
+      const organizerInfo = await UserInfo.findOne({ userID: organizerUID });
+      if (!organizerInfo) {
+        return res.status(400).json({ success: false, message: 'Organizer user info not found' });
+      }
+
+      // Parse fields if sent as JSON strings (from multipart/form-data)
+      let {
         meetingTitle,
         description,
         agenda,
-        organizer,
         meetingDate,
         meetingTime,
         duration,
@@ -26,14 +40,19 @@ class ScheduleMeetController {
         companyName,
         department,
         teamProjectName,
-        createdBy,
+        // attachments, // REMOVE: handle attachments below
       } = req.body;
 
+      // If fields are stringified JSON (from multipart), parse them
+      if (typeof participants === 'string') participants = JSON.parse(participants);
+      if (typeof location === 'string') location = JSON.parse(location);
+      if (typeof reminderSettings === 'string') reminderSettings = JSON.parse(reminderSettings);
+
       // Validate required fields
-      if (!meetingTitle || !organizer || !meetingDate || !meetingTime || !duration || !meetingType) {
+      if (!meetingTitle || !meetingDate || !meetingTime || !duration || !meetingType) {
         return res.status(400).json({
           success: false,
-          message: 'Missing required fields: meetingTitle, organizer, meetingDate, meetingTime, duration, meetingType',
+          message: 'Missing required fields: meetingTitle, meetingDate, meetingTime, duration, meetingType',
         });
       }
 
@@ -43,6 +62,75 @@ class ScheduleMeetController {
           success: false,
           message: 'Duration must be a number between 5 and 480 minutes',
         });
+      }
+
+      // Fetch participant details from UserInfo
+      let participantObjs = [];
+      if (participants && participants.length > 0) {
+        // Accept array of { userID } or { email }
+        const userIDs = participants.map((p) => p.userID).filter(Boolean);
+        const emails = participants.map((p) => p.email).filter(Boolean);
+        const users = await UserInfo.find({
+          $or: [
+            ...(userIDs.length ? [{ userID: { $in: userIDs } }] : []),
+            ...(emails.length ? [{ email: { $in: emails } }] : []),
+          ],
+        });
+
+        participantObjs = users.map((user) => ({
+          userID: user.userID,
+          name: user.fullName || user.displayName,
+          email: user.email,
+          profilePicture: user.profilePicture,
+          roleTitle: user.roleTitle,
+          department: user.department,
+          permissionsLevel: user.permissionsLevel,
+          status: 'invited',
+        }));
+      }
+
+      // Compose organizer object
+      const organizer = {
+        userID: organizerInfo.userID,
+        name: organizerInfo.fullName || organizerInfo.displayName,
+        email: organizerInfo.email,
+        profilePicture: organizerInfo.profilePicture,
+        roleTitle: organizerInfo.roleTitle,
+        department: organizerInfo.department,
+      };
+
+      // Compose createdBy object
+      const createdBy = {
+        userID: organizerInfo.userID,
+        name: organizerInfo.fullName || organizerInfo.displayName,
+        ipAddress: req.ip,
+      };
+
+      // Handle attachments: upload to Cloudinary, then save URLs
+      let attachments = [];
+      if (req.files && req.files.length > 0) {
+        const uploadPromises = req.files.map(async (file) => {
+          const uploadResult = await uploadToCloudinary(file.buffer, file.originalname, '/meetings/attachments');
+          return {
+            fileName: uploadResult.original_filename || file.originalname,
+            fileUrl: uploadResult.url,
+            fileSize: uploadResult.bytes,
+            mimeType: file.mimetype,
+            uploadedBy: {
+              userID: organizerInfo.userID,
+              name: organizerInfo.fullName || organizerInfo.displayName,
+            },
+            uploadedAt: new Date(),
+            isPublic: true,
+            public_id: uploadResult.public_id,
+            resource_type: uploadResult.resource_type,
+            format: uploadResult.format,
+            width: uploadResult.width,
+            height: uploadResult.height,
+            duration: uploadResult.duration,
+          };
+        });
+        attachments = await Promise.all(uploadPromises);
       }
 
       // Create meeting object
@@ -58,7 +146,7 @@ class ScheduleMeetController {
         repeatOption: repeatOption || 'None',
         meetingType,
         location: location || {},
-        participants: participants || [],
+        participants: participantObjs,
         visibility: visibility || 'team-only',
         allowGuestUsers: allowGuestUsers || false,
         requireApproval: requireApproval || false,
@@ -71,6 +159,7 @@ class ScheduleMeetController {
         department,
         teamProjectName,
         createdBy,
+        attachments, // <-- Save attachments array
       };
 
       // Add recurrence end date if recurring
@@ -81,7 +170,7 @@ class ScheduleMeetController {
       const newMeeting = new ScheduleMeet(meetingData);
 
       // Check for conflicts if participants are provided
-      if (participants && participants.length > 0) {
+      if (participantObjs.length > 0) {
         await newMeeting.checkConflicts();
       }
 
@@ -2501,15 +2590,16 @@ class ScheduleMeetController {
           });
       }
 
-      res.status(200).json({
+      // ✅ Send success response
+      return res.status(200).json({
         success: true,
-        message: `Recurring meeting series cancelled (${cancelType})`,
+        message: 'Meeting(s) cancelled successfully',
         data: cancelResult,
       });
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
-        message: 'Error cancelling recurring meeting series',
+        message: 'Server error during cancellation',
         error: error.message,
       });
     }
