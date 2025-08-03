@@ -38,7 +38,11 @@ router.patch('/:id/followup/:actionId', firebaseAuthMiddleware, ScheduleMeetCont
 // PARTICIPANT MANAGEMENT
 router.post('/:id/participants', firebaseAuthMiddleware, ScheduleMeetController.addParticipant);
 router.delete('/:id/participants/:userID', firebaseAuthMiddleware, ScheduleMeetController.removeParticipant);
-router.patch('/:id/participants/:userID/status', firebaseAuthMiddleware, ScheduleMeetController.updateParticipantStatus);
+router.patch(
+  '/:id/participants/:userID/status',
+  firebaseAuthMiddleware,
+  ScheduleMeetController.updateParticipantStatus
+);
 router.patch('/:id/participants/:userID/join', firebaseAuthMiddleware, ScheduleMeetController.recordParticipantJoin);
 router.patch('/:id/participants/:userID/leave', firebaseAuthMiddleware, ScheduleMeetController.recordParticipantLeave);
 
