@@ -25,99 +25,234 @@ class DateTimeTimezonePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final timezones = TFormatter.getAllTimeZoneNames();
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildDateTimeTile(
-                title: 'Date',
-                value: TFormatter.formatDateForUi(selectedDate),
-                icon: Icons.calendar_today_outlined,
-                isDarkMode: isDarkMode,
-                onTap: () async {
-                  final picked = await TFormatter.pickDate(context, selectedDate);
-                  if (picked != null && picked != selectedDate) {
-                    onDateChanged(picked);
-                  }
-                },
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isWide = constraints.maxWidth > 340;
+        final double tileWidth = isWide ? (constraints.maxWidth - 16) / 3 : constraints.maxWidth;
+
+        return isWide
+            ? Row(
+                children: [
+                  SizedBox(
+                    width: tileWidth,
+                    child: _buildDateTimeTile(
+                      title: 'Date',
+                      value: TFormatter.formatDateForUi(selectedDate),
+                      icon: Icons.calendar_today_outlined,
+                      isDarkMode: isDarkMode,
+                      onTap: () async {
+                        final picked = await _showThemedDatePicker(context, selectedDate, isDarkMode);
+                        if (picked != null && picked != selectedDate) {
+                          onDateChanged(picked);
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: tileWidth,
+                    child: _buildDateTimeTile(
+                      title: 'Time',
+                      value: TFormatter.formatTimeForUi(selectedTime),
+                      icon: Icons.access_time_rounded,
+                      isDarkMode: isDarkMode,
+                      onTap: () async {
+                        final picked = await _showThemedTimePicker(context, selectedTime, isDarkMode);
+                        if (picked != null && picked != selectedTime) {
+                          onTimeChanged(picked);
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: tileWidth,
+                    child: _buildDateTimeTile(
+                      title: 'Timezone',
+                      value: TFormatter.formatTimezone(selectedTimezone),
+                      icon: Icons.public,
+                      isDarkMode: isDarkMode,
+                      onTap: () async {
+                        final tz = await _showTimezonePicker(context, timezones, selectedTimezone, isDarkMode);
+                        if (tz != null && tz != selectedTimezone) {
+                          onTimezoneChanged(tz);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildDateTimeTile(
+                    title: 'Date',
+                    value: TFormatter.formatDateForUi(selectedDate),
+                    icon: Icons.calendar_today_outlined,
+                    isDarkMode: isDarkMode,
+                    onTap: () async {
+                      final picked = await _showThemedDatePicker(context, selectedDate, isDarkMode);
+                      if (picked != null && picked != selectedDate) {
+                        onDateChanged(picked);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDateTimeTile(
+                    title: 'Time',
+                    value: TFormatter.formatTimeForUi(selectedTime),
+                    icon: Icons.access_time_rounded,
+                    isDarkMode: isDarkMode,
+                    onTap: () async {
+                      final picked = await _showThemedTimePicker(context, selectedTime, isDarkMode);
+                      if (picked != null && picked != selectedTime) {
+                        onTimeChanged(picked);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDateTimeTile(
+                    title: 'Timezone',
+                    value: TFormatter.formatTimezone(selectedTimezone),
+                    icon: Icons.public,
+                    isDarkMode: isDarkMode,
+                    onTap: () async {
+                      final tz = await _showTimezonePicker(context, timezones, selectedTimezone, isDarkMode);
+                      if (tz != null && tz != selectedTimezone) {
+                        onTimezoneChanged(tz);
+                      }
+                    },
+                  ),
+                ],
+              );
+      },
+    );
+  }
+
+  // Themed Date Picker
+  Future<DateTime?> _showThemedDatePicker(BuildContext context, DateTime initialDate, bool isDarkMode) {
+    final theme = Theme.of(context);
+    return showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      builder: (context, child) {
+        return Theme(
+          data: theme.copyWith(
+            colorScheme: ColorScheme.light(
+              primary: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
+              onPrimary: Colors.white,
+              surface: isDarkMode ? TColors.cardColorDark : Colors.white,
+              onSurface: isDarkMode ? Colors.white : TColors.backgroundDark,
+              background: isDarkMode ? TColors.backgroundDarkAlt : TColors.backgroundLight,
+            ).copyWith(
+              brightness: isDarkMode ? Brightness.dark : Brightness.light,
+            ),
+            dialogBackgroundColor: isDarkMode ? TColors.cardColorDark : Colors.white,
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildDateTimeTile(
-                title: 'Time',
-                value: TFormatter.formatTimeForUi(selectedTime),
-                icon: Icons.access_time_rounded,
-                isDarkMode: isDarkMode,
-                onTap: () async {
-                  final picked = await TFormatter.pickTime(context, selectedTime);
-                  if (picked != null && picked != selectedTime) {
-                    onTimeChanged(picked);
-                  }
-                },
+          ),
+          child: child!,
+        );
+      },
+    );
+  }
+
+  // Themed Time Picker
+  Future<TimeOfDay?> _showThemedTimePicker(BuildContext context, TimeOfDay initialTime, bool isDarkMode) {
+    final theme = Theme.of(context);
+    return showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) {
+        return Theme(
+          data: theme.copyWith(
+            colorScheme: ColorScheme.light(
+              primary: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
+              onPrimary: Colors.white,
+              surface: isDarkMode ? TColors.cardColorDark : Colors.white,
+              onSurface: isDarkMode ? Colors.white : TColors.backgroundDark,
+              background: isDarkMode ? TColors.backgroundDarkAlt : TColors.backgroundLight,
+            ).copyWith(
+              brightness: isDarkMode ? Brightness.dark : Brightness.light,
+            ),
+            dialogBackgroundColor: isDarkMode ? TColors.cardColorDark : Colors.white,
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: selectedTimezone,
-          onChanged: (value) {
-            if (value != null) onTimezoneChanged(value);
-          },
-          items: timezones.map((tz) {
-            return DropdownMenuItem<String>(
-              value: tz,
-              child: Text(
-                TFormatter.formatTimezone(tz),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDarkMode ? Colors.white : TColors.backgroundDark,
+          ),
+          child: child!,
+        );
+      },
+    );
+  }
+
+  // Timezone Picker as Modal Bottom Sheet
+  Future<String?> _showTimezonePicker(
+    BuildContext context,
+    List<String> timezones,
+    String selectedTimezone,
+    bool isDarkMode,
+  ) async {
+    return await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: isDarkMode ? TColors.cardColorDark : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'Select Timezone',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.white : TColors.backgroundDark,
+                  ),
                 ),
               ),
-            );
-          }).toList(),
-          decoration: InputDecoration(
-            labelText: 'Timezone',
-            prefixIcon: Icon(
-              Icons.public,
-              color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-              size: 14,
-            ),
-            labelStyle: TextStyle(
-              color: isDarkMode ? TColors.textSecondaryDark : TColors.textTertiaryLight,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-            ),
-            filled: true,
-            fillColor: isDarkMode ? TColors.backgroundDarkAlt : const Color(0xFFF8FAFC),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: isDarkMode ? TColors.borderDark : TColors.borderLight,
-                width: 0.8,
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: timezones.length,
+                  separatorBuilder: (_, __) => Divider(
+                    color: isDarkMode ? TColors.borderDark : TColors.borderLight,
+                    height: 1,
+                  ),
+                  itemBuilder: (context, idx) {
+                    final tz = timezones[idx];
+                    return ListTile(
+                      title: Text(
+                        TFormatter.formatTimezone(tz),
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white : TColors.backgroundDark,
+                          fontSize: 12,
+                        ),
+                      ),
+                      trailing: tz == selectedTimezone
+                          ? Icon(Icons.check, color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary, size: 18)
+                          : null,
+                      onTap: () => Navigator.pop(context, tz),
+                    );
+                  },
+                ),
               ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: isDarkMode ? TColors.borderDark : TColors.borderLight,
-                width: 0.8,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-                width: 1.2,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              const SizedBox(height: 8),
+            ],
           ),
-          dropdownColor: isDarkMode ? TColors.cardColorDark : Colors.white,
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -131,7 +266,9 @@ class DateTimeTimezonePicker extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(8),
+        margin: const EdgeInsets.only(bottom: 2),
         decoration: BoxDecoration(
           color: isDarkMode ? TColors.backgroundDarkAlt : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(8),
