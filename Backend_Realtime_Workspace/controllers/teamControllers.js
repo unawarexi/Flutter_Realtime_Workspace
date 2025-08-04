@@ -105,9 +105,7 @@ export const createTeam = async (req, res) => {
     team.addActivity('team_created', mongoId, null, 'Team created');
     await team.save();
 
-    const populatedTeam = await Team.findById(team._id)
-      .populate('members.userId', 'fullName email profilePicture')
-      .populate('createdBy', 'fullName email');
+    const populatedTeam = await Team.findById(team._id).populate('members.userId', 'fullName email profilePicture').populate('createdBy', 'fullName email');
 
     res.status(201).json({
       success: true,
@@ -578,15 +576,7 @@ export const getTeamProjects = async (req, res) => {
     console.log('[getTeamProjects] req.query:', req.query);
     const { teamId } = req.params;
     const userId = req.user.id;
-    const {
-      status,
-      priority,
-      archived = false,
-      limit = 20,
-      page = 1,
-      sortBy = 'updatedAt',
-      sortOrder = 'desc',
-    } = req.query;
+    const { status, priority, archived = false, limit = 20, page = 1, sortBy = 'updatedAt', sortOrder = 'desc' } = req.query;
 
     const team = await Team.findById(teamId);
     if (!team) {
@@ -663,19 +653,13 @@ export const assignProject = async (req, res) => {
     }
 
     // Validate member IDs
-    const validMembers = memberIds.filter((id) =>
-      team.members.some((m) => m.userId.toString() === id && m.status === 'active')
-    );
+    const validMembers = memberIds.filter((id) => team.members.some((m) => m.userId.toString() === id && m.status === 'active'));
 
     project.members = [...new Set([...project.members, ...validMembers])];
     await project.save();
 
     // Add timeline event
-    await project.addTimelineEvent(
-      'Members Assigned',
-      `${validMembers.length} members assigned to project`,
-      'collaborators'
-    );
+    await project.addTimelineEvent('Members Assigned', `${validMembers.length} members assigned to project`, 'collaborators');
 
     res.json({
       success: true,
@@ -877,11 +861,7 @@ export const searchTeams = async (req, res) => {
     const searchQuery = {
       $and: [
         {
-          $or: [
-            { name: { $regex: q, $options: 'i' } },
-            { description: { $regex: q, $options: 'i' } },
-            { industry: { $regex: q, $options: 'i' } },
-          ],
+          $or: [{ name: { $regex: q, $options: 'i' } }, { description: { $regex: q, $options: 'i' } }, { industry: { $regex: q, $options: 'i' } }],
         },
         {
           $or: [

@@ -1,18 +1,7 @@
 import express from 'express';
-import {
-  getMyUserInfo,
-  createOrUpdateMyUserInfo,
-  updateMyUserInfo,
-  deleteMyUserInfo,
-  getAllUserInfos,
-  getUserInfoById,
-  uploadProfilePicture,
-  revokeUserReferralCode,
-  regenerateMyInviteCode,
-  updateInvitePermissions,
-  getMyReferralStats, // <-- add import
-  getReferralChain, // <-- add import
-  getUserByInviteCodeOrEmail, // <-- add import
+import { getMyUserInfo, createOrUpdateMyUserInfo, updateMyUserInfo,deleteMyUserInfo, getAllUserInfos, getUserInfoById,
+  uploadProfilePicture, revokeUserReferralCode, regenerateMyInviteCode, updateInvitePermissions, getMyReferralStats, // <-- add import
+  getReferralChain, getUserByInviteCodeOrEmail, 
 } from '../controllers/userInfoControllers.js';
 import { firebaseAuthMiddleware } from '../middlewares/firebaseAuthMiddleware.js';
 import { upload } from '../services/cloudinary.js';

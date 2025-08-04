@@ -108,9 +108,7 @@ export const createProject = async (req, res) => {
           const fileUrl = uploadResult.secure_url || uploadResult.url;
 
           if (!fileUrl) {
-            throw new Error(
-              `Upload failed: No URL returned for file ${file.originalname}. Upload result: ${JSON.stringify(uploadResult)}`
-            );
+            throw new Error(`Upload failed: No URL returned for file ${file.originalname}. Upload result: ${JSON.stringify(uploadResult)}`);
           }
 
           // Ensure all required fields are present and properly structured
@@ -197,20 +195,7 @@ export const createProject = async (req, res) => {
  */
 export const getProjects = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 10,
-      status,
-      priority,
-      teamId,
-      starred,
-      recent,
-      archived,
-      search,
-      sortBy = 'updatedAt',
-      sortOrder = 'desc',
-      tags,
-    } = req.query;
+    const { page = 1, limit = 10, status, priority, teamId, starred, recent, archived, search, sortBy = 'updatedAt', sortOrder = 'desc', tags } = req.query;
 
     // Build filter object
     const filter = {};
@@ -475,11 +460,7 @@ export const uploadAttachment = async (req, res) => {
     }
 
     // Upload to Cloudinary
-    const uploadResult = await uploadToCloudinary(
-      req.file.path,
-      `/projects/${project.key}/attachments`,
-      req.file.originalname
-    );
+    const uploadResult = await uploadToCloudinary(req.file.path, `/projects/${project.key}/attachments`, req.file.originalname);
 
     // Create attachment object
     const attachment = {

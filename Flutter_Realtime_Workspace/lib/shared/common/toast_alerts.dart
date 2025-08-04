@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'package:flutter/material.dart';
 
 enum ToastType { success, error, info, warning }
@@ -134,8 +136,7 @@ class _ToastOverlayState extends State<_ToastOverlay>
         beginOffset = const Offset(0, 1);
         break;
       case ToastGravity.CENTER:
-      default:
-        beginOffset = const Offset(0, 0);
+      beginOffset = const Offset(0, 0);
         break;
     }
 
@@ -236,17 +237,24 @@ class _AdvancedToastWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double width =
-        MediaQuery.of(context).size.width * 0.82; // reduced width
+        MediaQuery.of(context).size.width * 0.68; // reduced width for nav icons
+
+    // Custom theme colors
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
+    final borderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final textColor = isDarkMode ? Colors.white : const Color(0xFF1E293B);
+    // final subtitleColor = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
     return Container(
       width: width,
       margin: const EdgeInsets.symmetric(
-          horizontal: 18, vertical: 4), // tighter margin
+          horizontal: 18, vertical: 4),
       padding: const EdgeInsets.symmetric(
-          horizontal: 14, vertical: 10), // less padding
+          horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14), // smaller radius
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: style.color.withOpacity(0.13),
@@ -260,7 +268,7 @@ class _AdvancedToastWidget extends StatelessWidget {
           ),
         ],
         border: Border.all(
-          color: style.color.withOpacity(0.18),
+          color: borderColor,
           width: 1,
         ),
       ),
@@ -276,7 +284,7 @@ class _AdvancedToastWidget extends StatelessWidget {
             child: Icon(
               style.icon,
               color: style.color,
-              size: 20, // smaller icon
+              size: 20,
             ),
           ),
           const SizedBox(width: 10),
@@ -299,10 +307,10 @@ class _AdvancedToastWidget extends StatelessWidget {
                 ],
                 Text(
                   message,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF1E293B),
+                    color: textColor,
                     height: 1.3,
                   ),
                   maxLines: 3,

@@ -3,13 +3,7 @@
 import UserInfo from '../models/userInfoModel.js';
 import { uploadToCloudinary, deleteFromCloudinary } from '../services/cloudinary.js';
 import { calculateProfileCompletion } from '../utils/profileCompletion.js';
-import {
-  assignReferralCode,
-  useReferralCode,
-  revokeReferralCode,
-  autoRegenerateExpiredCodes,
-  getReferralStats,
-} from '../utils/referalCode.js';
+import { assignReferralCode, useReferralCode, revokeReferralCode, autoRegenerateExpiredCodes, getReferralStats } from '../utils/referalCode.js';
 import admin from 'firebase-admin';
 
 // Utility functions (keep existing ones)
@@ -99,11 +93,7 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
     delete data.inviteCode;
 
     // Upsert user
-    let userInfo = await UserInfo.findOneAndUpdate(
-      { email },
-      { ...data, email, userID: uid },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    );
+    let userInfo = await UserInfo.findOneAndUpdate({ email }, { ...data, email, userID: uid }, { new: true, upsert: true, setDefaultsOnInsert: true });
     console.log('[createOrUpdateMyUserInfo] Upserted userInfo:', userInfo);
 
     // Always assign a referral code if user doesn't have one (ignore invitePermissions here)

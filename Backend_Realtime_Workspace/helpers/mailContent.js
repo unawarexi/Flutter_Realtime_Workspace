@@ -1095,9 +1095,8 @@ class EmailContentGenerator {
           content: `
                     <ul style="margin-left: 20px; color: #475569;">
                         ${
-                          maintenanceData.impactedServices
-                            ?.map((service) => `<li><strong>${service.name}:</strong> ${service.impact}</li>`)
-                            .join('') || '<li>Minimal service disruption expected</li>'
+                          maintenanceData.impactedServices?.map((service) => `<li><strong>${service.name}:</strong> ${service.impact}</li>`).join('') ||
+                          '<li>Minimal service disruption expected</li>'
                         }
                     </ul>
                 `,
@@ -1228,10 +1227,7 @@ class EmailContentGenerator {
                     <ul style="margin-left: 20px; color: #475569;">
                         ${
                           digestData.achievements
-                            ?.map(
-                              (achievement) =>
-                                `<li><strong>${achievement.title}:</strong> ${achievement.description}</li>`
-                            )
+                            ?.map((achievement) => `<li><strong>${achievement.title}:</strong> ${achievement.description}</li>`)
                             .join('') || '<li>Keep up the great work!</li>'
                         }
                     </ul>

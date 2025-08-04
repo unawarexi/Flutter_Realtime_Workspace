@@ -22,29 +22,19 @@ export const validateTeamInput = [
     .isLength({ min: 2, max: 100 })
     .withMessage('Team name must be between 2 and 100 characters'),
 
-  body('description')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Description must not exceed 500 characters'),
+  body('description').optional().trim().isLength({ max: 500 }).withMessage('Description must not exceed 500 characters'),
 
   body('industry').optional().trim().isLength({ max: 100 }).withMessage('Industry must not exceed 100 characters'),
 
   body('size').optional().isIn(['1-10', '11-50', '51-100', '101-500', '500+']).withMessage('Invalid team size option'),
 
-  body('type')
-    .optional()
-    .isIn(['company', 'agency', 'startup', 'non-profit', 'educational', 'personal'])
-    .withMessage('Invalid team type'),
+  body('type').optional().isIn(['company', 'agency', 'startup', 'non-profit', 'educational', 'personal']).withMessage('Invalid team type'),
 
   body('settings.isPublic').optional().isBoolean().withMessage('isPublic must be a boolean'),
 
   body('settings.allowPublicProjects').optional().isBoolean().withMessage('allowPublicProjects must be a boolean'),
 
-  body('settings.requireApprovalForJoining')
-    .optional()
-    .isBoolean()
-    .withMessage('requireApprovalForJoining must be a boolean'),
+  body('settings.requireApprovalForJoining').optional().isBoolean().withMessage('requireApprovalForJoining must be a boolean'),
 
   body('settings.allowMemberInvites').optional().isBoolean().withMessage('allowMemberInvites must be a boolean'),
 

@@ -1,80 +1,86 @@
 import express from 'express';
-import ScheduleMeetController from '../controllers/scheduleMeet.js';
+import {
+  addAttachment, addFollowUpAction, addMeetingNotes, addParticipant, addRecording, bulkDeleteMeetings, bulkUpdateMeetings,
+  cancelRecurringSeries, checkConflicts, checkParticipantAvailability, convertMeetingTimezone, createFromTemplate, createMeeting,
+  createMeetingTemplate, deleteMeeting, exportMeetingData, getAllMeetings, getCalendarView, getMeetingAnalytics, getMeetingById,
+  getMeetingTemplates, getTodaysMeetings, getUpcomingMeetings, getUserConflicts, getUserInvitations, getUserMeetings, getUserMeetingStats,
+  permanentlyDeleteMeeting, postponeMeeting, recordParticipantJoin, recordParticipantLeave, removeAttachment, removeParticipant,
+  restoreMeeting, searchMeetings, sendInvitations, updateFollowUpStatus, updateMeeting, updateMeetingNotes, updateMeetingStatus,
+  updateParticipantStatus, updateRecurringSeries, updateReminderSettings
+} from '../controllers/scheduleMeet.js';
 import { firebaseAuthMiddleware } from '../middlewares/firebaseAuthMiddleware.js';
+import { upload, multerErrorHandler } from '../services/cloudinary.js'; // <-- Add these imports
 
 const router = express.Router();
+router.use(firebaseAuthMiddleware);
 
 // CREATE
-router.post('/', firebaseAuthMiddleware, ScheduleMeetController.createMeeting);
-router.post('/template', firebaseAuthMiddleware, ScheduleMeetController.createMeetingTemplate);
-router.post('/from-template/:templateId', firebaseAuthMiddleware, ScheduleMeetController.createFromTemplate);
+router.post('/', upload.array('attachments', 10), multerErrorHandler, createMeeting);
+router.post('/template',  createMeetingTemplate);
+router.post('/from-template/:templateId',  createFromTemplate);
 
 // READ
-router.get('/', firebaseAuthMiddleware, ScheduleMeetController.getAllMeetings);
-router.get('/:id', firebaseAuthMiddleware, ScheduleMeetController.getMeetingById);
-router.get('/user/:userID', firebaseAuthMiddleware, ScheduleMeetController.getUserMeetings);
-router.get('/user/:userID/today', firebaseAuthMiddleware, ScheduleMeetController.getTodaysMeetings);
-router.get('/user/:userID/upcoming', firebaseAuthMiddleware, ScheduleMeetController.getUpcomingMeetings);
-router.get('/user/:userID/invitations', firebaseAuthMiddleware, ScheduleMeetController.getUserInvitations);
-router.get('/user/:userID/conflicts', firebaseAuthMiddleware, ScheduleMeetController.getUserConflicts);
-router.get('/user/:userID/calendar', firebaseAuthMiddleware, ScheduleMeetController.getCalendarView);
-router.get('/user/:userID/stats', firebaseAuthMiddleware, ScheduleMeetController.getUserMeetingStats);
-router.get('/analytics/:companyName', firebaseAuthMiddleware, ScheduleMeetController.getMeetingAnalytics);
-router.get('/templates', firebaseAuthMiddleware, ScheduleMeetController.getMeetingTemplates);
-router.get('/search', firebaseAuthMiddleware, ScheduleMeetController.searchMeetings);
-router.get('/export', firebaseAuthMiddleware, ScheduleMeetController.exportMeetingData);
+router.get('/',  getAllMeetings);
+router.get('/:id',  getMeetingById);
+router.get('/user/:userID',  getUserMeetings);
+router.get('/user/:userID/today',  getTodaysMeetings);
+router.get('/user/:userID/upcoming',  getUpcomingMeetings);
+router.get('/user/:userID/invitations',  getUserInvitations);
+router.get('/user/:userID/conflicts',  getUserConflicts);
+router.get('/user/:userID/calendar',  getCalendarView);
+router.get('/user/:userID/stats',  getUserMeetingStats);
+router.get('/analytics/:companyName',  getMeetingAnalytics);
+router.get('/templates',  getMeetingTemplates);
+router.get('/search',  searchMeetings);
+router.get('/export',  exportMeetingData);
 
 // UPDATE
-router.put('/:id', firebaseAuthMiddleware, ScheduleMeetController.updateMeeting);
-router.patch('/:id/status', firebaseAuthMiddleware, ScheduleMeetController.updateMeetingStatus);
-router.patch('/:id/postpone', firebaseAuthMiddleware, ScheduleMeetController.postponeMeeting);
-router.patch('/:id/reminder', firebaseAuthMiddleware, ScheduleMeetController.updateReminderSettings);
-router.patch('/:id/notes/:noteId', firebaseAuthMiddleware, ScheduleMeetController.updateMeetingNotes);
-router.patch('/:id/convert-timezone', firebaseAuthMiddleware, ScheduleMeetController.convertMeetingTimezone);
-router.patch('/:id/recurring', firebaseAuthMiddleware, ScheduleMeetController.updateRecurringSeries);
-router.patch('/:id/cancel-recurring', firebaseAuthMiddleware, ScheduleMeetController.cancelRecurringSeries);
-router.patch('/:id/followup/:actionId', firebaseAuthMiddleware, ScheduleMeetController.updateFollowUpStatus);
+router.put('/:id',  updateMeeting);
+router.patch('/:id/status',  updateMeetingStatus);
+router.patch('/:id/postpone',  postponeMeeting);
+router.patch('/:id/reminder',  updateReminderSettings);
+router.patch('/:id/notes/:noteId',  updateMeetingNotes);
+router.patch('/:id/convert-timezone',  convertMeetingTimezone);
+router.patch('/:id/recurring',  updateRecurringSeries);
+router.patch('/:id/cancel-recurring',  cancelRecurringSeries);
+router.patch('/:id/followup/:actionId',  updateFollowUpStatus);
 
 // PARTICIPANT MANAGEMENT
-router.post('/:id/participants', firebaseAuthMiddleware, ScheduleMeetController.addParticipant);
-router.delete('/:id/participants/:userID', firebaseAuthMiddleware, ScheduleMeetController.removeParticipant);
-router.patch(
-  '/:id/participants/:userID/status',
-  firebaseAuthMiddleware,
-  ScheduleMeetController.updateParticipantStatus
-);
-router.patch('/:id/participants/:userID/join', firebaseAuthMiddleware, ScheduleMeetController.recordParticipantJoin);
-router.patch('/:id/participants/:userID/leave', firebaseAuthMiddleware, ScheduleMeetController.recordParticipantLeave);
+router.post('/:id/participants',  addParticipant);
+router.delete('/:id/participants/:userID',  removeParticipant);
+router.patch('/:id/participants/:userID/status', updateParticipantStatus);
+router.patch('/:id/participants/:userID/join',  recordParticipantJoin);
+router.patch('/:id/participants/:userID/leave',  recordParticipantLeave);
 
 // ATTACHMENTS
-router.post('/:id/attachments', firebaseAuthMiddleware, ScheduleMeetController.addAttachment);
-router.delete('/:id/attachments/:attachmentId', firebaseAuthMiddleware, ScheduleMeetController.removeAttachment);
+router.post('/:id/attachments',  addAttachment);
+router.delete('/:id/attachments/:attachmentId',  removeAttachment);
 
 // NOTES
-router.post('/:id/notes', firebaseAuthMiddleware, ScheduleMeetController.addMeetingNotes);
+router.post('/:id/notes',  addMeetingNotes);
 
 // RECORDINGS
-router.post('/:id/recordings', firebaseAuthMiddleware, ScheduleMeetController.addRecording);
+router.post('/:id/recordings',  addRecording);
 
 // FOLLOW-UPS
-router.post('/:id/followup', firebaseAuthMiddleware, ScheduleMeetController.addFollowUpAction);
+router.post('/:id/followup',  addFollowUpAction);
 
 // BULK
-router.patch('/bulk-update', firebaseAuthMiddleware, ScheduleMeetController.bulkUpdateMeetings);
-router.patch('/bulk-delete', firebaseAuthMiddleware, ScheduleMeetController.bulkDeleteMeetings);
+router.patch('/bulk-update',  bulkUpdateMeetings);
+router.patch('/bulk-delete',  bulkDeleteMeetings);
 
 // CONFLICTS
-router.get('/:id/conflicts', firebaseAuthMiddleware, ScheduleMeetController.checkConflicts);
+router.get('/:id/conflicts',  checkConflicts);
 
 // AVAILABILITY
-router.get('/availability', firebaseAuthMiddleware, ScheduleMeetController.checkParticipantAvailability);
+router.get('/availability',  checkParticipantAvailability);
 
 // INVITATIONS
-router.post('/:id/invitations', firebaseAuthMiddleware, ScheduleMeetController.sendInvitations);
+router.post('/:id/invitations',  sendInvitations);
 
 // DELETE/RESTORE
-router.delete('/:id', firebaseAuthMiddleware, ScheduleMeetController.deleteMeeting);
-router.delete('/:id/permanent', firebaseAuthMiddleware, ScheduleMeetController.permanentlyDeleteMeeting);
-router.patch('/:id/restore', firebaseAuthMiddleware, ScheduleMeetController.restoreMeeting);
+router.delete('/:id',  deleteMeeting);
+router.delete('/:id/permanent',  permanentlyDeleteMeeting);
+router.patch('/:id/restore',  restoreMeeting);
 
 export default router;

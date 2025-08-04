@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_realtime_workspace/shared/styles/colors.dart';
 import 'package:flutter_realtime_workspace/core/utils/helpers/helper_functions.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
@@ -7,9 +7,9 @@ import 'widgets/select_participants_sheet.dart';
 import 'package:flutter_realtime_workspace/features/collaboration/presentation/widgets/date_timezone.dart';
 import 'package:flutter_realtime_workspace/features/collaboration/presentation/widgets/add_attachements.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_realtime_workspace/global/schedule_provider.dart';
-import 'package:flutter_realtime_workspace/shared/common/toast_alerts.dart';
 import 'package:flutter_realtime_workspace/core/utils/constants/variables.dart';
+import 'package:flutter_realtime_workspace/core/animations/animation.dart';
+import 'package:flutter_realtime_workspace/features/collaboration/data/collaboration_repository.dart';
 
 class ScheduleMeet extends StatefulWidget {
   const ScheduleMeet({super.key});
@@ -20,11 +20,6 @@ class ScheduleMeet extends StatefulWidget {
 
 class _ScheduleMeetState extends State<ScheduleMeet>
     with TickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late AnimationController _slideController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -33,60 +28,101 @@ class _ScheduleMeetState extends State<ScheduleMeet>
 
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
   TimeOfDay _selectedTime = TimeOfDay.now();
-  String _duration = kMeetingDurationOptions[3]; // '60 minutes'
-  String _repeatOption = kMeetingRepeatOptions[0]; // 'None'
+  String _duration = kMeetingDurationOptions[3];
+  String _repeatOption = kMeetingRepeatOptions[0];
   String _meetingType = 'Virtual';
-  String _reminderTime = kMeetingReminderOptions[1]; // '15 minutes before'
+  String _reminderTime = kMeetingReminderOptions[1];
   String _selectedTimezone = 'UTC';
   List<Map<String, String>> _selectedParticipants = [];
   List<String> _attachments = [];
 
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
-
   bool _isSubmitting = false;
+  late final ScreenEnterAnimation _screenAnimation;
 
   @override
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _fadeController.forward();
-    _slideController.forward();
+    _screenAnimation = ScreenEnterAnimation(vsync: this);
+    _screenAnimation.start();
     tzdata.initializeTimeZones();
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
-    _slideController.dispose();
+    _screenAnimation.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
     _linkController.dispose();
     super.dispose();
+  }
+
+  int _parseDuration(String durationStr) {
+    if (durationStr.contains('hour')) {
+      final hours = int.tryParse(durationStr.split(' ')[0]) ?? 1;
+      return hours * 60;
+    } else if (durationStr.contains('minutes')) {
+      return int.tryParse(durationStr.split(' ')[0]) ?? 15;
+    }
+    return 60;
+  }
+
+  void _scheduleMeeting(WidgetRef ref) async {
+    if (_formKey.currentState!.validate()) {
+      final startHour = _selectedTime.hour;
+      final startMinute = _selectedTime.minute;
+      final durationMinutes = _parseDuration(_duration);
+
+      final startTime = '${startHour.toString().padLeft(2, '0')}:${startMinute.toString().padLeft(2, '0')}';
+      final startTotal = startHour * 60 + startMinute;
+      final endTotal = startTotal + durationMinutes;
+      final endHour = (endTotal ~/ 60) % 24;
+      final endMinute = endTotal % 60;
+      final endTime = '${endHour.toString().padLeft(2, '0')}:${endMinute.toString().padLeft(2, '0')}';
+
+      final meetingData = <String, dynamic>{
+        'meetingTitle': _titleController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'agenda': _descriptionController.text.trim(),
+        'meetingDate': _selectedDate.toIso8601String(),
+        'meetingTime': {
+          'start': startTime,
+          'end': endTime,
+        },
+        'duration': durationMinutes,
+        'timezone': _selectedTimezone,
+        'repeatOption': _repeatOption,
+        'meetingType': _meetingType,
+        'location': _meetingType == 'Virtual'
+            ? {'meetingLink': _linkController.text.trim()}
+            : {'address': _locationController.text.trim()},
+        'participants': _selectedParticipants.map((p) => {
+          if (p['userID'] != null) 'userID': p['userID'],
+          if (p['email'] != null) 'email': p['email'],
+        }).toList(),
+        'reminderSettings': {
+          'enabled': true,
+          'reminderTime': _reminderTime,
+          'notificationMethods': ['push', 'email'],
+        },
+        'attachments': _attachments,
+      };
+
+      await CollaborationRepository.submitScheduleMeeting(
+        context: context,
+        ref: ref,
+        meetingData: meetingData,
+        setSubmitting: (val) => setState(() => _isSubmitting = val),
+        titleController: _titleController,
+        onSuccess: () {
+          Future.delayed(const Duration(milliseconds: 800), () {
+            if (mounted) Navigator.pop(context);
+          });
+        },
+        onError: () {},
+      );
+    }
   }
 
   @override
@@ -99,9 +135,9 @@ class _ScheduleMeetState extends State<ScheduleMeet>
           backgroundColor: isDarkMode ? TColors.backgroundDarkAlt : TColors.backgroundLight,
           appBar: _buildAppBar(isDarkMode),
           body: FadeTransition(
-            opacity: _fadeAnimation,
+            opacity: _screenAnimation.fadeAnimation,
             child: SlideTransition(
-              position: _slideAnimation,
+              position: _screenAnimation.slideAnimation,
               child: Form(
                 key: _formKey,
                 child: CustomScrollView(
@@ -154,10 +190,10 @@ class _ScheduleMeetState extends State<ScheduleMeet>
       backgroundColor: isDarkMode ? TColors.backgroundDarkAlt : TColors.backgroundLight,
       elevation: 0,
       leading: Container(
-        margin: const EdgeInsets.all(4), // reduced margin
+        margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: isDarkMode ? TColors.cardColorDark : Colors.white,
-          borderRadius: BorderRadius.circular(8), // reduced radius
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isDarkMode ? TColors.borderDark : TColors.borderLight,
             width: 0.8,
@@ -167,7 +203,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
           icon: Icon(
             Icons.arrow_back_ios_rounded,
             color: isDarkMode ? Colors.white : TColors.backgroundDark,
-            size: 14, // reduced icon size
+            size: 14,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -176,18 +212,18 @@ class _ScheduleMeetState extends State<ScheduleMeet>
         'Schedule Meeting',
         style: TextStyle(
           color: isDarkMode ? Colors.white : TColors.backgroundDark,
-          fontSize: 16, // reduced font size
+          fontSize: 16,
           fontWeight: FontWeight.bold,
         ),
       ),
       centerTitle: true,
-      toolbarHeight: 40, // reduced height
+      toolbarHeight: 40,
       actions: [
         Container(
-          margin: const EdgeInsets.all(4), // reduced margin
+          margin: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             color: isDarkMode ? TColors.cardColorDark : Colors.white,
-            borderRadius: BorderRadius.circular(8), // reduced radius
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isDarkMode ? TColors.borderDark : TColors.borderLight,
               width: 0.8,
@@ -197,10 +233,9 @@ class _ScheduleMeetState extends State<ScheduleMeet>
             icon: Icon(
               Icons.calendar_month_outlined,
               color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-              size: 14, // reduced icon size
+              size: 14,
             ),
             onPressed: () {
-              // Show calendar conflicts
               _showConflictChecker(isDarkMode);
             },
           ),
@@ -211,7 +246,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
 
   Widget _buildHeaderSection(bool isDarkMode) {
     return Container(
-      padding: const EdgeInsets.all(10), // reduced padding
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDarkMode
@@ -220,7 +255,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(12), // reduced radius
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: (isDarkMode ? TColors.buttonPrimary : TColors.buttonPrimaryLight).withOpacity(0.2),
         ),
@@ -228,19 +263,19 @@ class _ScheduleMeetState extends State<ScheduleMeet>
       child: Row(
         children: [
           Container(
-            width: 32, // reduced size
+            width: 32,
             height: 32,
             decoration: BoxDecoration(
               color: (isDarkMode ? TColors.buttonPrimary : TColors.buttonPrimaryLight).withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8), // reduced radius
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               Icons.schedule_rounded,
               color: isDarkMode ? TColors.lightBlue : TColors.buttonPrimary,
-              size: 16, // reduced icon size
+              size: 16,
             ),
           ),
-          const SizedBox(width: 8), // reduced spacing
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,16 +283,16 @@ class _ScheduleMeetState extends State<ScheduleMeet>
                 Text(
                   'Create New Meeting',
                   style: TextStyle(
-                    fontSize: 12, // reduced font size
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: isDarkMode ? Colors.white : TColors.backgroundDark,
                   ),
                 ),
-                const SizedBox(height: 2), // reduced spacing
+                const SizedBox(height: 2),
                 Text(
                   'Schedule meetings with your team effortlessly',
                   style: TextStyle(
-                    fontSize: 9, // reduced font size
+                    fontSize: 9,
                     color: isDarkMode ? TColors.textSecondaryDark : TColors.textTertiaryLight,
                     fontWeight: FontWeight.w500,
                   ),
@@ -416,7 +451,6 @@ class _ScheduleMeetState extends State<ScheduleMeet>
                   size: 20,
                 ),
                 onPressed: () {
-                  // Open Google Maps to select location
                   _openLocationPicker();
                 },
               ),
@@ -520,84 +554,6 @@ class _ScheduleMeetState extends State<ScheduleMeet>
                   ),
                 ],
               ),
-      ),
-    );
-  }
-
-  void _scheduleMeeting(WidgetRef ref) async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isSubmitting = true);
-
-      final meetingData = <String, dynamic>{
-        'meetingTitle': _titleController.text.trim(),
-        'description': _descriptionController.text.trim(),
-        'agenda': _descriptionController.text.trim(),
-        // 'organizer': {}, // REMOVE: backend uses authenticated user
-        'meetingDate': _selectedDate.toIso8601String(),
-        'meetingTime': {
-          'start': _selectedTime.format(context),
-        },
-        'duration': _parseDuration(_duration),
-        'timezone': _selectedTimezone,
-        'repeatOption': _repeatOption,
-        'meetingType': _meetingType,
-        'location': _meetingType == 'Virtual'
-            ? {'meetingLink': _linkController.text.trim()}
-            : {'address': _locationController.text.trim()},
-        // Only send userID or email for each participant
-        'participants': _selectedParticipants.map((p) => {
-          if (p['userID'] != null) 'userID': p['userID'],
-          if (p['email'] != null) 'email': p['email'],
-        }).toList(),
-        'reminderSettings': {
-          'enabled': true,
-          'reminderTime': _reminderTime,
-          'notificationMethods': ['push', 'email'],
-        },
-        'attachments': _attachments,
-      };
-
-      dynamic result;
-      try {
-        result = await ref.read(scheduleProvider.notifier).createMeeting(meetingData);
-      } catch (e) {
-        setState(() => _isSubmitting = false);
-        context.showToast(
-          "An unexpected error occurred. Please try again.",
-          type: ToastType.error,
-        );
-        return;
-      }
-
-      setState(() => _isSubmitting = false);
-
-      if (result != null && result['success'] == true) {
-        context.showToast(
-          'Meeting "${_titleController.text}" has been scheduled successfully.',
-          type: ToastType.success,
-        );
-        Future.delayed(const Duration(milliseconds: 800), () {
-          if (mounted) Navigator.pop(context);
-        });
-      } else {
-        context.showToast(
-          result?['message'] ?? 'Failed to schedule meeting. Please try again.',
-          type: ToastType.error,
-        );
-      }
-    }
-  }
-
-  void _addToCalendar() {
-    HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Meeting added to calendar'),
-        backgroundColor: TColors.buttonPrimary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
       ),
     );
   }
@@ -896,17 +852,17 @@ class _ScheduleMeetState extends State<ScheduleMeet>
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(8), // reduced padding
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isSelected
               ? (isDarkMode ? TColors.buttonPrimary : TColors.buttonPrimaryLight).withOpacity(0.1)
               : (isDarkMode ? TColors.backgroundDarkAlt : const Color(0xFFF8FAFC)),
-          borderRadius: BorderRadius.circular(8), // reduced radius
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
                 ? (isDarkMode ? TColors.buttonPrimary : TColors.buttonPrimaryLight)
                 : (isDarkMode ? TColors.borderDark : TColors.borderLight),
-            width: isSelected ? 1.2 : 0.8, // reduced width
+            width: isSelected ? 1.2 : 0.8,
           ),
         ),
         child: Column(
@@ -916,16 +872,16 @@ class _ScheduleMeetState extends State<ScheduleMeet>
               color: isSelected
                   ? (isDarkMode ? TColors.lightBlue : TColors.buttonPrimary)
                   : (isDarkMode ? TColors.textSecondaryDark : TColors.textTertiaryLight),
-              size: 16, // reduced icon size
+              size: 16,
             ),
-            const SizedBox(height: 4), // reduced spacing
+            const SizedBox(height: 4),
             Text(
               title,
               style: TextStyle(
                 color: isSelected
                     ? (isDarkMode ? Colors.white : TColors.backgroundDark)
                     : (isDarkMode ? TColors.textSecondaryDark : TColors.textTertiaryLight),
-                fontSize: 10, // reduced font size
+                fontSize: 10,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -935,7 +891,6 @@ class _ScheduleMeetState extends State<ScheduleMeet>
     );
   }
 
-  // Conflict Checker Dialog
   void _showConflictChecker(bool isDarkMode) {
     showDialog(
       context: context,
@@ -1001,10 +956,7 @@ class _ScheduleMeetState extends State<ScheduleMeet>
     );
   }
 
-  // Location Picker (Google Maps integration placeholder)
   void _openLocationPicker() {
-    // This would typically open Google Maps or a location picker
-    // For now, showing a simple dialog
     showDialog(
       context: context,
       builder: (context) {
@@ -1054,16 +1006,5 @@ class _ScheduleMeetState extends State<ScheduleMeet>
         );
       },
     );
-  }
-
-  // Helper to parse duration string to int minutes
-  int _parseDuration(String durationStr) {
-    if (durationStr.contains('hour')) {
-      final hours = int.tryParse(durationStr.split(' ')[0]) ?? 1;
-      return hours * 60;
-    } else if (durationStr.contains('minutes')) {
-      return int.tryParse(durationStr.split(' ')[0]) ?? 15;
-    }
-    return 60;
   }
 }

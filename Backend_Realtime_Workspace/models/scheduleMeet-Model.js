@@ -132,14 +132,7 @@ const scheduleMeetSchema = new mongoose.Schema(
       enabled: { type: Boolean, default: true },
       reminderTime: {
         type: String,
-        enum: [
-          '5 minutes before',
-          '15 minutes before',
-          '30 minutes before',
-          '1 hour before',
-          '2 hours before',
-          '1 day before',
-        ],
+        enum: ['5 minutes before', '15 minutes before', '30 minutes before', '1 hour before', '2 hours before', '1 day before'],
         default: '15 minutes before',
       },
       notificationMethods: [
@@ -381,10 +374,7 @@ scheduleMeetSchema.statics.findUserMeetings = function (userID, options = {}) {
     query.meetingDate.$lte = endDate;
   }
 
-  return this.find(query)
-    .sort({ meetingDate: 1 })
-    .limit(limit)
-    .populate('recurringMeetings', 'meetingTitle meetingDate status');
+  return this.find(query).sort({ meetingDate: 1 }).limit(limit).populate('recurringMeetings', 'meetingTitle meetingDate status');
 };
 
 // Static method for analytics

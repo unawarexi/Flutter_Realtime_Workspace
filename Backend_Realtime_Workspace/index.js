@@ -1,5 +1,3 @@
-// app.js
-
 import express from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
@@ -24,12 +22,7 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(
-  cors({
-    origin: '*',
-    credentials: true,
-  })
-);
+app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -39,9 +32,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 app.use((req, res, next) => {
-  console.log(
-    `[${new Date().toISOString()}] ${req.method} ${req.path} - Body size: ${req.get('content-length') || 0} bytes`
-  );
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - Body size: ${req.get('content-length') || 0} bytes`);
   next();
 });
 

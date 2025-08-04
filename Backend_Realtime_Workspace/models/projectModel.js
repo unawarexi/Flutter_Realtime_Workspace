@@ -204,11 +204,7 @@ projectSchema.methods.updateProgress = function (progress) {
   const oldProgress = this.progress;
   this.progress = progress;
 
-  this.addTimelineEvent(
-    'Progress Updated',
-    `Progress updated from ${Math.round(oldProgress * 100)}% to ${Math.round(progress * 100)}%`,
-    'progress'
-  );
+  this.addTimelineEvent('Progress Updated', `Progress updated from ${Math.round(oldProgress * 100)}% to ${Math.round(progress * 100)}%`, 'progress');
 
   return this.save();
 };

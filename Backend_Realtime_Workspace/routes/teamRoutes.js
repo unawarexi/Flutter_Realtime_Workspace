@@ -21,11 +21,7 @@ import {
   checkPermissions,
 } from '../controllers/teamControllers.js';
 import { firebaseAuthMiddleware } from '../middlewares/firebaseAuthMiddleware.js';
-import {
-  validateTeamInput,
-  validateInviteInput,
-  validateMemberRoleUpdate,
-} from '../middlewares/teamValidationMiddleware.js';
+import { validateTeamInput, validateInviteInput, validateMemberRoleUpdate } from '../middlewares/teamValidationMiddleware.js';
 
 const router = express.Router();
 

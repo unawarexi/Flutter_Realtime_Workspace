@@ -44,11 +44,7 @@ const fileFilter = (req, file, cb) => {
     }
     cb(null, true);
   } else {
-    cb(
-      new Error(
-        `Invalid file type. Received: ${file.mimetype} (${fileExtension}). Expected: ${expectedMimeType || 'valid file MIME type'}.`
-      )
-    );
+    cb(new Error(`Invalid file type. Received: ${file.mimetype} (${fileExtension}). Expected: ${expectedMimeType || 'valid file MIME type'}.`));
   }
 };
 
@@ -131,11 +127,7 @@ export const uploadToCloudinary = async (fileBuffer, originalName, folder = '/pr
 
     // Add transformations for images and videos
     if (resourceType === 'image') {
-      uploadOptions.transformation = [
-        { width: 1000, height: 1000, crop: 'limit' },
-        { quality: 'auto' },
-        { fetch_format: 'auto' },
-      ];
+      uploadOptions.transformation = [{ width: 1000, height: 1000, crop: 'limit' }, { quality: 'auto' }, { fetch_format: 'auto' }];
     } else if (resourceType === 'video') {
       uploadOptions.transformation = [{ quality: 'auto' }, { fetch_format: 'auto' }];
     }

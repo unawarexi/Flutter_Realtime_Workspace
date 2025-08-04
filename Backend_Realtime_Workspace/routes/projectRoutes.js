@@ -1,23 +1,7 @@
 import express from 'express';
-import {
-  createProject,
-  getProjects,
-  getProjectById,
-  updateProject,
-  deleteProject,
-  uploadAttachment,
-  deleteAttachment,
-  getProjectAttachments,
-  toggleProjectStar,
-  toggleProjectArchive,
-  updateProjectProgress,
-  updateProjectCollaborators,
-  addTimelineEvent,
-  getProjectTimeline,
-  getProjectStats,
-  duplicateProject,
-  getNewProjectKey,
-  getNewTeamId,
+import {createProject, getProjects, getProjectById, updateProject, deleteProject, uploadAttachment, deleteAttachment,
+  getProjectAttachments, toggleProjectStar, toggleProjectArchive, updateProjectProgress, updateProjectCollaborators,
+  addTimelineEvent, getProjectTimeline, getProjectStats, duplicateProject, getNewProjectKey,getNewTeamId,
 } from '../controllers/projectControllers.js';
 import { upload, multerErrorHandler } from '../services/cloudinary.js';
 import { firebaseAuthMiddleware } from '../middlewares/firebaseAuthMiddleware.js';
