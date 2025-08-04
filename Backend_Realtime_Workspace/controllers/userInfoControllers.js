@@ -48,7 +48,7 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
         console.log('[createOrUpdateMyUserInfo] Image file detected:', {
           filename: req.file.originalname,
           mimetype: req.file.mimetype,
-          size: req.file.size,
+          size: req.file.size
         });
 
         const existingUser = await UserInfo.findOne({ email });
@@ -73,7 +73,7 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
         console.error('[createOrUpdateMyUserInfo] Failed to upload image:', uploadError.message);
         return res.status(500).json({
           message: 'Failed to upload image',
-          error: uploadError.message,
+          error: uploadError.message
         });
       }
     }
@@ -101,14 +101,14 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
       try {
         // Directly assign code, bypassing invitePermissions check
         const code = await assignReferralCode(userInfo, {
-          ignorePermissions: true,
+          ignorePermissions: true
         });
         console.log('[createOrUpdateMyUserInfo] Assigned code (auto):', userInfo.inviteCode);
       } catch (err) {
         console.error('[createOrUpdateMyUserInfo] Referral code assignment failed:', err.message);
         return res.status(400).json({
           message: 'Referral code assignment failed',
-          error: err.message,
+          error: err.message
         });
       }
     }
@@ -119,7 +119,7 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
 
       const result = await useReferralCode({
         memberUser: userInfo,
-        code: referralCodeToUse,
+        code: referralCodeToUse
       });
 
       if (!result.success) {
@@ -127,7 +127,7 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
         return res.status(400).json({
           message: 'Invalid or expired referral code',
           reason: result.reason,
-          regenerated: result.regenerated,
+          regenerated: result.regenerated
         });
       }
 
@@ -142,7 +142,7 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
       email: userInfo.email,
       inviteCode: userInfo.inviteCode,
       referredTo: userInfo.referredTo?.length || 0,
-      invitedBy: userInfo.invitedBy?.length || 0,
+      invitedBy: userInfo.invitedBy?.length || 0
     });
 
     res.status(200).json(userInfo);
@@ -150,7 +150,7 @@ export const createOrUpdateMyUserInfo = async (req, res) => {
     console.error('[createOrUpdateMyUserInfo] Failed to save user info:', err.message);
     res.status(500).json({
       message: 'Failed to save user info',
-      error: err.message,
+      error: err.message
     });
   }
 };
@@ -186,7 +186,7 @@ export const updateMyUserInfo = async (req, res) => {
         console.error('[updateMyUserInfo] Failed to upload image:', uploadError.message);
         return res.status(500).json({
           message: 'Failed to upload image',
-          error: uploadError.message,
+          error: uploadError.message
         });
       }
     }
@@ -215,7 +215,7 @@ export const updateMyUserInfo = async (req, res) => {
         console.error('[updateMyUserInfo] Referral code assignment failed:', err.message);
         return res.status(400).json({
           message: 'Referral code assignment failed',
-          error: err.message,
+          error: err.message
         });
       }
     }
@@ -225,7 +225,7 @@ export const updateMyUserInfo = async (req, res) => {
       console.log('[updateMyUserInfo] Using referral code:', referralCodeToUse);
       const result = await useReferralCode({
         memberUser: user,
-        code: referralCodeToUse,
+        code: referralCodeToUse
       });
 
       if (!result.success) {
@@ -233,7 +233,7 @@ export const updateMyUserInfo = async (req, res) => {
         return res.status(400).json({
           message: 'Invalid or expired referral code',
           reason: result.reason,
-          regenerated: result.regenerated,
+          regenerated: result.regenerated
         });
       }
     }
@@ -246,7 +246,7 @@ export const updateMyUserInfo = async (req, res) => {
       email: user.email,
       inviteCode: user.inviteCode,
       referredTo: user.referredTo?.length || 0,
-      invitedBy: user.invitedBy?.length || 0,
+      invitedBy: user.invitedBy?.length || 0
     });
 
     res.json(user);
@@ -254,7 +254,7 @@ export const updateMyUserInfo = async (req, res) => {
     console.error('[updateMyUserInfo] Failed to update user info:', err.message);
     res.status(500).json({
       message: 'Failed to update user info',
-      error: err.message,
+      error: err.message
     });
   }
 };
@@ -299,7 +299,7 @@ export const getReferralChain = async (req, res) => {
         email: currentUser.email,
         name: currentUser.fullName || currentUser.displayName || currentUser.email,
         inviteCode: currentUser.inviteCode,
-        level: chain.length,
+        level: chain.length
       });
 
       if (currentUser.invitedBy && currentUser.invitedBy.length > 0) {
@@ -327,7 +327,7 @@ export const getReferralChain = async (req, res) => {
             email: referredUser.email,
             name: referredUser.fullName || referredUser.displayName || referredUser.email,
             inviteCode: referredUser.inviteCode,
-            children: subChain,
+            children: subChain
           });
         }
       }
@@ -341,10 +341,10 @@ export const getReferralChain = async (req, res) => {
       currentUser: {
         email: user.email,
         name: user.fullName || user.displayName || user.email,
-        inviteCode: user.inviteCode,
+        inviteCode: user.inviteCode
       },
       upwardChain: upwardChain.reverse(), // Root first
-      downwardChain,
+      downwardChain
     });
   } catch (err) {
     console.error('[getReferralChain] Server error:', err.message);
@@ -465,8 +465,8 @@ export const uploadProfilePicture = async (req, res) => {
         {
           $set: {
             profilePicture: uploadResult.url,
-            profilePicturePublicId: uploadResult.public_id,
-          },
+            profilePicturePublicId: uploadResult.public_id
+          }
         },
         { new: true }
       );
@@ -478,13 +478,13 @@ export const uploadProfilePicture = async (req, res) => {
       res.json({
         message: 'Profile picture uploaded successfully',
         profilePicture: uploadResult.url,
-        user: updatedUser,
+        user: updatedUser
       });
     } catch (uploadError) {
       console.error('[uploadProfilePicture] Failed to upload image:', uploadError.message);
       return res.status(500).json({
         message: 'Failed to upload image',
-        error: uploadError.message,
+        error: uploadError.message
       });
     }
   } catch (err) {
@@ -559,13 +559,13 @@ export const regenerateMyInviteCode = async (req, res) => {
     res.json({
       message: 'Invite code regenerated',
       inviteCode: user.inviteCode,
-      inviteCodeExpiry: user.inviteCodeExpiry,
+      inviteCodeExpiry: user.inviteCodeExpiry
     });
   } catch (err) {
     console.error('[regenerateMyInviteCode] Failed to regenerate invite code:', err.message);
     res.status(500).json({
       message: 'Failed to regenerate invite code',
-      error: err.message,
+      error: err.message
     });
   }
 };
@@ -584,20 +584,20 @@ export const updateInvitePermissions = async (req, res) => {
 
     user.invitePermissions = {
       ...user.invitePermissions,
-      ...invitePermissions,
+      ...invitePermissions
     };
     await user.save();
 
     console.log('[updateInvitePermissions] Updated invitePermissions:', user.invitePermissions);
     res.json({
       message: 'Invite permissions updated',
-      invitePermissions: user.invitePermissions,
+      invitePermissions: user.invitePermissions
     });
   } catch (err) {
     console.error('[updateInvitePermissions] Failed to update invite permissions:', err.message);
     res.status(500).json({
       message: 'Failed to update invite permissions',
-      error: err.message,
+      error: err.message
     });
   }
 };

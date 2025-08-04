@@ -4,7 +4,7 @@ import UserInfo from '../models/userInfoModel.js'; // Adjust path as needed
 
 // Initialize Firebase Admin if not already initialized
 const adminverify = admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert(serviceAccount)
 });
 
 export const firebaseAuthMiddleware = async (req, res, next) => {
@@ -26,7 +26,7 @@ export const firebaseAuthMiddleware = async (req, res, next) => {
 
       console.log('[firebaseAuthMiddleware] Decoded Firebase user:', {
         uid: firebaseUID,
-        email,
+        email
       });
 
       // Find or create user in MongoDB to ensure sync
@@ -41,7 +41,7 @@ export const firebaseAuthMiddleware = async (req, res, next) => {
           email: email,
           authProvider: 'Google', // You might want to detect this from the token
           isVerified: decodedToken.email_verified || false,
-          signupTimestamp: new Date(),
+          signupTimestamp: new Date()
           // Add any other required fields with defaults
         });
 
@@ -73,13 +73,13 @@ export const firebaseAuthMiddleware = async (req, res, next) => {
         uid: firebaseUID,
         email: email,
         mongoId: userInfo._id,
-        userRecord: userInfo, // Full user record if needed
+        userRecord: userInfo // Full user record if needed
       };
 
       console.log('[firebaseAuthMiddleware] User sync completed:', {
         firebaseUID,
         mongoId: userInfo._id,
-        email,
+        email
       });
 
       next();
@@ -87,14 +87,14 @@ export const firebaseAuthMiddleware = async (req, res, next) => {
       console.error('[firebaseAuthMiddleware] Token verification failed:', verifyErr);
       return res.status(401).json({
         message: 'Invalid or expired token',
-        error: verifyErr.message,
+        error: verifyErr.message
       });
     }
   } catch (err) {
     console.error('[firebaseAuthMiddleware] Middleware error:', err.message);
     return res.status(500).json({
       message: 'Auth middleware error',
-      error: err.message,
+      error: err.message
     });
   }
 };

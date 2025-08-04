@@ -56,11 +56,11 @@ export const createTeam = async (req, res) => {
             canChangeSettings: true,
             canViewAllProjects: true,
             canExportData: true,
-            canManageIntegrations: true,
+            canManageIntegrations: true
           },
-          status: 'active',
-        },
-      ],
+          status: 'active'
+        }
+      ]
     });
 
     // Add additional members if provided (skip owner)
@@ -94,7 +94,7 @@ export const createTeam = async (req, res) => {
           role: m.role || 'member',
           permissions: team.getDefaultPermissions(m.role || 'member'),
           status: m.status || 'active',
-          joinedAt: new Date(),
+          joinedAt: new Date()
         });
       }
     }
@@ -110,7 +110,7 @@ export const createTeam = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Team created successfully',
-      data: populatedTeam,
+      data: populatedTeam
     });
 
     console.log('[createTeam] REACHED END, sent 201 response');
@@ -118,7 +118,7 @@ export const createTeam = async (req, res) => {
     console.log('[createTeam][ERROR]', error);
     res.status(500).json({
       error: 'Failed to create team',
-      details: error.message,
+      details: error.message
     });
     console.log('[createTeam] SENT 500 response');
   }
@@ -136,7 +136,7 @@ export const getUserTeams = async (req, res) => {
     const teams = await Team.find({
       'members.userId': userId,
       'members.status': 'active',
-      status,
+      status
     })
       .populate('members.userId', 'fullName email profilePicture roleTitle')
       .populate('createdBy', 'fullName email')
@@ -147,7 +147,7 @@ export const getUserTeams = async (req, res) => {
     const total = await Team.countDocuments({
       'members.userId': userId,
       'members.status': 'active',
-      status,
+      status
     });
 
     res.json({
@@ -157,14 +157,14 @@ export const getUserTeams = async (req, res) => {
         total,
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(total / limit),
-      },
+        pages: Math.ceil(total / limit)
+      }
     });
   } catch (error) {
     console.error('[getUserTeams][ERROR]', error);
     res.status(500).json({
       error: 'Failed to fetch teams',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -201,18 +201,18 @@ export const getTeam = async (req, res) => {
       .populate({
         path: 'projects',
         select: 'name description status priority progress createdAt',
-        match: { archived: false },
+        match: { archived: false }
       });
 
     res.json({
       success: true,
-      data: populatedTeam,
+      data: populatedTeam
     });
   } catch (error) {
     console.error('[getTeam][ERROR]', error);
     res.status(500).json({
       error: 'Failed to fetch team',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -258,13 +258,13 @@ export const updateTeam = async (req, res) => {
     res.json({
       success: true,
       message: 'Team updated successfully',
-      data: updatedTeam,
+      data: updatedTeam
     });
   } catch (error) {
     console.error('[updateTeam][ERROR]', error);
     res.status(500).json({
       error: 'Failed to update team',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -307,20 +307,20 @@ export const deleteTeam = async (req, res) => {
         {
           archived: true,
           status: 'archived',
-          archivedAt: new Date(),
+          archivedAt: new Date()
         }
       );
     }
 
     res.json({
       success: true,
-      message: permanent ? 'Team deleted permanently' : 'Team archived successfully',
+      message: permanent ? 'Team deleted permanently' : 'Team archived successfully'
     });
   } catch (error) {
     console.error('[deleteTeam][ERROR]', error);
     res.status(500).json({
       error: 'Failed to delete team',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -363,13 +363,13 @@ export const inviteMember = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Invitation sent successfully',
+      message: 'Invitation sent successfully'
     });
   } catch (error) {
     console.error('[inviteMember][ERROR]', error);
     res.status(500).json({
       error: 'Failed to invite member',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -393,13 +393,13 @@ export const acceptInvitation = async (req, res) => {
     res.json({
       success: true,
       message: 'Invitation accepted successfully',
-      data: updatedTeam,
+      data: updatedTeam
     });
   } catch (error) {
     console.error('[acceptInvitation][ERROR]', error);
     res.status(500).json({
       error: 'Failed to accept invitation',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -429,13 +429,13 @@ export const updateMemberRole = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Member role updated successfully',
+      message: 'Member role updated successfully'
     });
   } catch (error) {
     console.error('[updateMemberRole][ERROR]', error);
     res.status(500).json({
       error: 'Failed to update member role',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -463,13 +463,13 @@ export const removeMember = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Member removed successfully',
+      message: 'Member removed successfully'
     });
   } catch (error) {
     console.error('[removeMember][ERROR]', error);
     res.status(500).json({
       error: 'Failed to remove member',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -494,7 +494,7 @@ export const leaveTeam = async (req, res) => {
 
     if (member.role === 'owner') {
       return res.status(400).json({
-        error: 'Team owner cannot leave. Transfer ownership first.',
+        error: 'Team owner cannot leave. Transfer ownership first.'
       });
     }
 
@@ -502,13 +502,13 @@ export const leaveTeam = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Successfully left the team',
+      message: 'Successfully left the team'
     });
   } catch (error) {
     console.error('[leaveTeam][ERROR]', error);
     res.status(500).json({
       error: 'Failed to leave team',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -556,13 +556,13 @@ export const transferOwnership = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Ownership transferred successfully',
+      message: 'Ownership transferred successfully'
     });
   } catch (error) {
     console.error('[transferOwnership][ERROR]', error);
     res.status(500).json({
       error: 'Failed to transfer ownership',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -598,12 +598,7 @@ export const getTeamProjects = async (req, res) => {
     const skip = (page - 1) * limit;
     const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
-    const projects = await Project.find(query)
-      .populate('createdBy', 'fullName email profilePicture')
-      .populate('members', 'fullName email profilePicture')
-      .sort(sort)
-      .limit(parseInt(limit))
-      .skip(skip);
+    const projects = await Project.find(query).populate('createdBy', 'fullName email profilePicture').populate('members', 'fullName email profilePicture').sort(sort).limit(parseInt(limit)).skip(skip);
 
     const total = await Project.countDocuments(query);
 
@@ -614,14 +609,14 @@ export const getTeamProjects = async (req, res) => {
         total,
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(total / limit),
-      },
+        pages: Math.ceil(total / limit)
+      }
     });
   } catch (error) {
     console.error('[getTeamProjects][ERROR]', error);
     res.status(500).json({
       error: 'Failed to fetch team projects',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -663,13 +658,13 @@ export const assignProject = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Project assigned successfully',
+      message: 'Project assigned successfully'
     });
   } catch (error) {
     console.error('[assignProject][ERROR]', error);
     res.status(500).json({
       error: 'Failed to assign project',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -729,18 +724,18 @@ export const getTeamAnalytics = async (req, res) => {
           _id: null,
           totalProjects: { $sum: 1 },
           activeProjects: {
-            $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] }
           },
           completedProjects: {
-            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
           },
           onHoldProjects: {
-            $sum: { $cond: [{ $eq: ['$status', 'on-hold'] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ['$status', 'on-hold'] }, 1, 0] }
           },
           averageProgress: { $avg: '$progress' },
-          totalAttachments: { $sum: { $size: '$attachments' } },
-        },
-      },
+          totalAttachments: { $sum: { $size: '$attachments' } }
+        }
+      }
     ]);
 
     // Get member activity
@@ -750,16 +745,16 @@ export const getTeamAnalytics = async (req, res) => {
       {
         $match: {
           'members.status': 'active',
-          'members.lastActive': { $gte: startDate },
-        },
+          'members.lastActive': { $gte: startDate }
+        }
       },
       {
         $group: {
           _id: null,
           activeMembers: { $sum: 1 },
-          totalMembers: { $sum: 1 },
-        },
-      },
+          totalMembers: { $sum: 1 }
+        }
+      }
     ]);
 
     // Get recent activities
@@ -775,15 +770,15 @@ export const getTeamAnalytics = async (req, res) => {
         period: {
           startDate,
           endDate,
-          days: Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)),
-        },
-      },
+          days: Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))
+        }
+      }
     });
   } catch (error) {
     console.error('[getTeamAnalytics][ERROR]', error);
     res.status(500).json({
       error: 'Failed to fetch team analytics',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -823,7 +818,7 @@ export const getActivityFeed = async (req, res) => {
     // Populate user data for activities
     const populatedActivities = await Team.populate(paginatedActivities, [
       { path: 'actor', select: 'fullName email profilePicture' },
-      { path: 'target', select: 'fullName email profilePicture' },
+      { path: 'target', select: 'fullName email profilePicture' }
     ]);
 
     res.json({
@@ -833,14 +828,14 @@ export const getActivityFeed = async (req, res) => {
         total: activities.length,
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(activities.length / limit),
-      },
+        pages: Math.ceil(activities.length / limit)
+      }
     });
   } catch (error) {
     console.error('[getActivityFeed][ERROR]', error);
     res.status(500).json({
       error: 'Failed to fetch activity feed',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -861,16 +856,16 @@ export const searchTeams = async (req, res) => {
     const searchQuery = {
       $and: [
         {
-          $or: [{ name: { $regex: q, $options: 'i' } }, { description: { $regex: q, $options: 'i' } }, { industry: { $regex: q, $options: 'i' } }],
+          $or: [{ name: { $regex: q, $options: 'i' } }, { description: { $regex: q, $options: 'i' } }, { industry: { $regex: q, $options: 'i' } }]
         },
         {
           $or: [
             { 'members.userId': userId }, // User's teams
-            ...(includePublic === 'true' ? [{ 'settings.isPublic': true }] : []),
-          ],
+            ...(includePublic === 'true' ? [{ 'settings.isPublic': true }] : [])
+          ]
         },
-        { status: 'active' },
-      ],
+        { status: 'active' }
+      ]
     };
 
     const teams = await Team.find(searchQuery)
@@ -883,13 +878,13 @@ export const searchTeams = async (req, res) => {
     res.json({
       success: true,
       data: teams,
-      count: teams.length,
+      count: teams.length
     });
   } catch (error) {
     console.error('[searchTeams][ERROR]', error);
     res.status(500).json({
       error: 'Failed to search teams',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -928,13 +923,13 @@ export const updateIntegrations = async (req, res) => {
     res.json({
       success: true,
       message: 'Integrations updated successfully',
-      data: team.integrations,
+      data: team.integrations
     });
   } catch (error) {
     console.log('[updateIntegrations][ERROR]', error);
     res.status(500).json({
       error: 'Failed to update integrations',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -981,13 +976,13 @@ export const bulkUpdatePermissions = async (req, res) => {
 
     res.json({
       success: true,
-      message: `Updated permissions for ${updatedCount} members`,
+      message: `Updated permissions for ${updatedCount} members`
     });
   } catch (error) {
     console.error('[bulkUpdatePermissions][ERROR]', error);
     res.status(500).json({
       error: 'Failed to update permissions',
-      details: error.message,
+      details: error.message
     });
   }
 };
@@ -1017,14 +1012,14 @@ export const checkPermissions = async (req, res) => {
       data: {
         role: member.role,
         permissions: member.permissions,
-        isOwner: member.role === 'owner',
-      },
+        isOwner: member.role === 'owner'
+      }
     });
   } catch (error) {
     console.error('[checkPermissions][ERROR]', error);
     res.status(500).json({
       error: 'Failed to check permissions',
-      details: error.message,
+      details: error.message
     });
   }
 };

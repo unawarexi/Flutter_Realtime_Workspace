@@ -5,11 +5,11 @@ export const sendFCM = async (fcmToken, code) => {
     token: fcmToken,
     notification: {
       title: 'Your 2FA Code',
-      body: `Your verification code is: ${code}`,
+      body: `Your verification code is: ${code}`
     },
     data: {
-      code: code,
-    },
+      code: code
+    }
   };
 
   try {

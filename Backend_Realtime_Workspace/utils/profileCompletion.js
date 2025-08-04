@@ -27,7 +27,7 @@ const PROFILE_FIELDS = [
   'authProvider',
   'signupTimestamp',
   'ipAddress',
-  'isVerified',
+  'isVerified'
 ];
 
 export function calculateProfileCompletion(userInfo) {

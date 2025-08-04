@@ -1,24 +1,7 @@
 import express from 'express';
-import {
-  createTeam,
-  getUserTeams,
-  searchTeams,
-  getTeam,
-  updateTeam,
-  deleteTeam,
-  inviteMember,
-  acceptInvitation,
-  updateMemberRole,
-  removeMember,
-  leaveTeam,
-  transferOwnership,
-  bulkUpdatePermissions,
-  getTeamProjects,
-  assignProject,
-  getTeamAnalytics,
-  getActivityFeed,
-  updateIntegrations,
-  checkPermissions,
+import {createTeam, getUserTeams, searchTeams, getTeam, updateTeam, deleteTeam, inviteMember,
+  acceptInvitation, updateMemberRole, removeMember, leaveTeam, transferOwnership, bulkUpdatePermissions,
+  getTeamProjects, assignProject, getTeamAnalytics, getActivityFeed, updateIntegrations, checkPermissions
 } from '../controllers/teamControllers.js';
 import { firebaseAuthMiddleware } from '../middlewares/firebaseAuthMiddleware.js';
 import { validateTeamInput, validateInviteInput, validateMemberRoleUpdate } from '../middlewares/teamValidationMiddleware.js';
@@ -31,7 +14,7 @@ const teamMiddlewares = [
   (req, res, next) => {
     console.log(`[teamRoutes] ${req.method} ${req.originalUrl}`);
     next();
-  },
+  }
 ];
 
 // Apply both middlewares to all routes

@@ -5,28 +5,15 @@ const activitySchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: [
-        'member_joined',
-        'member_left',
-        'member_role_changed',
-        'member_invited',
-        'project_created',
-        'project_assigned',
-        'project_completed',
-        'project_archived',
-        'team_created',
-        'team_updated',
-        'team_archived',
-        'settings_changed',
-      ],
-      required: true,
+      enum: ['member_joined', 'member_left', 'member_role_changed', 'member_invited', 'project_created', 'project_assigned', 'project_completed', 'project_archived', 'team_created', 'team_updated', 'team_archived', 'settings_changed'],
+      required: true
     },
     actor: { type: mongoose.Schema.Types.ObjectId, ref: 'UserInfo' },
     target: { type: mongoose.Schema.Types.ObjectId, ref: 'UserInfo' }, // for member-related activities
     projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' }, // for project-related activities
     description: { type: String, required: true },
     metadata: { type: mongoose.Schema.Types.Mixed }, // additional data
-    timestamp: { type: Date, default: Date.now },
+    timestamp: { type: Date, default: Date.now }
   },
   { _id: false }
 );
@@ -37,12 +24,12 @@ const teamMemberSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'UserInfo',
-      required: true,
+      required: true
     },
     role: {
       type: String,
       enum: ['owner', 'admin', 'manager', 'member', 'viewer', 'guest'],
-      default: 'member',
+      default: 'member'
     },
     permissions: {
       canCreateProjects: { type: Boolean, default: true },
@@ -52,7 +39,7 @@ const teamMemberSchema = new mongoose.Schema(
       canChangeSettings: { type: Boolean, default: false },
       canViewAllProjects: { type: Boolean, default: true },
       canExportData: { type: Boolean, default: false },
-      canManageIntegrations: { type: Boolean, default: false },
+      canManageIntegrations: { type: Boolean, default: false }
     },
     joinedAt: { type: Date, default: Date.now },
     invitedAt: { type: Date },
@@ -60,7 +47,7 @@ const teamMemberSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['active', 'invited', 'suspended', 'removed'],
-      default: 'active',
+      default: 'active'
     },
     lastActive: { type: Date, default: Date.now },
     favoriteProjects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }],
@@ -69,8 +56,8 @@ const teamMemberSchema = new mongoose.Schema(
       push: { type: Boolean, default: true },
       projectUpdates: { type: Boolean, default: true },
       mentions: { type: Boolean, default: true },
-      weeklyDigest: { type: Boolean, default: true },
-    },
+      weeklyDigest: { type: Boolean, default: true }
+    }
   },
   { _id: false }
 );
@@ -82,12 +69,12 @@ const inviteSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ['admin', 'manager', 'member', 'viewer', 'guest'],
-      default: 'member',
+      default: 'member'
     },
     invitedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'UserInfo',
-      required: true,
+      required: true
     },
     token: { type: String, required: true, unique: true },
     message: { type: String }, // custom invite message
@@ -97,10 +84,10 @@ const inviteSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['pending', 'accepted', 'expired', 'cancelled', 'resent'],
-      default: 'pending',
+      default: 'pending'
     },
     attempts: { type: Number, default: 0 }, // number of times invite was sent
-    lastSentAt: { type: Date, default: Date.now },
+    lastSentAt: { type: Date, default: Date.now }
   },
   { _id: true }
 );
@@ -116,25 +103,25 @@ const teamSchema = new mongoose.Schema(
     // Team metadata
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'UserInfo',
+      ref: 'UserInfo'
       // required: true,
     },
     industry: { type: String },
     size: {
       type: String,
-      enum: ['1-10', '11-50', '51-100', '101-500', '500+'],
+      enum: ['1-10', '11-50', '51-100', '101-500', '500+']
     },
     type: {
       type: String,
       enum: ['company', 'agency', 'startup', 'non-profit', 'educational', 'personal'],
-      default: 'company',
+      default: 'company'
     },
 
     // Status and lifecycle
     status: {
       type: String,
       enum: ['active', 'archived', 'suspended'],
-      default: 'active',
+      default: 'active'
     },
     isActive: { type: Boolean, default: true },
     archived: { type: Boolean, default: false },
@@ -159,17 +146,17 @@ const teamSchema = new mongoose.Schema(
       timezone: { type: String, default: 'UTC' },
       workingDays: {
         type: [String],
-        default: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        default: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
       },
       workingHours: {
         start: { type: String, default: '09:00' },
-        end: { type: String, default: '17:00' },
+        end: { type: String, default: '17:00' }
       },
       notifications: {
         emailDigest: { type: Boolean, default: true },
         slackIntegration: { type: Boolean, default: false },
-        projectDeadlines: { type: Boolean, default: true },
-      },
+        projectDeadlines: { type: Boolean, default: true }
+      }
     },
 
     // Subscription and billing (for future use)
@@ -177,15 +164,15 @@ const teamSchema = new mongoose.Schema(
       plan: {
         type: String,
         enum: ['free', 'basic', 'pro', 'enterprise'],
-        default: 'free',
+        default: 'free'
       },
       status: {
         type: String,
         enum: ['active', 'cancelled', 'expired'],
-        default: 'active',
+        default: 'active'
       },
       expiresAt: { type: Date },
-      features: { type: [String], default: [] },
+      features: { type: [String], default: [] }
     },
 
     // Activity and analytics
@@ -196,7 +183,7 @@ const teamSchema = new mongoose.Schema(
       completedProjects: { type: Number, default: 0 },
       totalMembers: { type: Number, default: 0 },
       activeMembers: { type: Number, default: 0 },
-      lastActivityAt: { type: Date, default: Date.now },
+      lastActivityAt: { type: Date, default: Date.now }
     },
 
     // Custom fields for extensibility
@@ -207,23 +194,23 @@ const teamSchema = new mongoose.Schema(
       slack: {
         enabled: { type: Boolean, default: false },
         webhookUrl: { type: String },
-        channel: { type: String },
+        channel: { type: String }
       },
       github: {
         enabled: { type: Boolean, default: false },
         organization: { type: String },
-        repositories: [{ type: String }],
+        repositories: [{ type: String }]
       },
       googleWorkspace: {
         enabled: { type: Boolean, default: false },
-        domain: { type: String },
-      },
-    },
+        domain: { type: String }
+      }
+    }
   },
   {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
 
@@ -289,7 +276,7 @@ teamSchema.methods.addMember = function (userId, role = 'member', invitedBy = nu
     permissions,
     invitedBy,
     joinedAt: new Date(),
-    status: 'active',
+    status: 'active'
   });
 
   // Add activity
@@ -352,7 +339,7 @@ teamSchema.methods.inviteMember = function (email, role = 'member', invitedBy, m
     token,
     message,
     expiresAt,
-    status: 'pending',
+    status: 'pending'
   });
 
   // Add activity
@@ -389,7 +376,7 @@ teamSchema.methods.addActivity = function (type, actor, target, description, met
     target,
     description,
     metadata,
-    timestamp: new Date(),
+    timestamp: new Date()
   });
 
   // Keep only last 100 activities
@@ -408,7 +395,7 @@ teamSchema.methods.getDefaultPermissions = function (role) {
       canChangeSettings: true,
       canViewAllProjects: true,
       canExportData: true,
-      canManageIntegrations: true,
+      canManageIntegrations: true
     },
     admin: {
       canCreateProjects: true,
@@ -418,7 +405,7 @@ teamSchema.methods.getDefaultPermissions = function (role) {
       canChangeSettings: true,
       canViewAllProjects: true,
       canExportData: true,
-      canManageIntegrations: false,
+      canManageIntegrations: false
     },
     manager: {
       canCreateProjects: true,
@@ -428,7 +415,7 @@ teamSchema.methods.getDefaultPermissions = function (role) {
       canChangeSettings: false,
       canViewAllProjects: true,
       canExportData: true,
-      canManageIntegrations: false,
+      canManageIntegrations: false
     },
     member: {
       canCreateProjects: true,
@@ -438,7 +425,7 @@ teamSchema.methods.getDefaultPermissions = function (role) {
       canChangeSettings: false,
       canViewAllProjects: true,
       canExportData: false,
-      canManageIntegrations: false,
+      canManageIntegrations: false
     },
     viewer: {
       canCreateProjects: false,
@@ -448,7 +435,7 @@ teamSchema.methods.getDefaultPermissions = function (role) {
       canChangeSettings: false,
       canViewAllProjects: true,
       canExportData: false,
-      canManageIntegrations: false,
+      canManageIntegrations: false
     },
     guest: {
       canCreateProjects: false,
@@ -458,8 +445,8 @@ teamSchema.methods.getDefaultPermissions = function (role) {
       canChangeSettings: false,
       canViewAllProjects: false,
       canExportData: false,
-      canManageIntegrations: false,
-    },
+      canManageIntegrations: false
+    }
   };
 
   return permissionsByRole[role] || permissionsByRole.member;
@@ -474,7 +461,7 @@ teamSchema.statics.findUserTeams = function (userId) {
   return this.find({
     'members.userId': userId,
     'members.status': 'active',
-    status: 'active',
+    status: 'active'
   }).populate('members.userId', 'fullName email profilePicture');
 };
 
@@ -486,8 +473,8 @@ teamSchema.statics.getTeamStats = function (teamId) {
         from: 'projects',
         localField: '_id',
         foreignField: 'teamId',
-        as: 'teamProjects',
-      },
+        as: 'teamProjects'
+      }
     },
     {
       $addFields: {
@@ -496,20 +483,20 @@ teamSchema.statics.getTeamStats = function (teamId) {
           $size: {
             $filter: {
               input: '$teamProjects',
-              cond: { $eq: ['$$this.status', 'active'] },
-            },
-          },
+              cond: { $eq: ['$$this.status', 'active'] }
+            }
+          }
         },
         completedProjectCount: {
           $size: {
             $filter: {
               input: '$teamProjects',
-              cond: { $eq: ['$$this.status', 'completed'] },
-            },
-          },
-        },
-      },
-    },
+              cond: { $eq: ['$$this.status', 'completed'] }
+            }
+          }
+        }
+      }
+    }
   ]);
 };
 

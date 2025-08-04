@@ -15,12 +15,12 @@ const userInfoSchema = new mongoose.Schema(
     department: { type: String },
     workType: {
       type: String,
-      enum: ['Full-time', 'Part-time', 'Freelancer', 'Intern'],
+      enum: ['Full-time', 'Part-time', 'Freelancer', 'Intern']
     },
     timezone: { type: String },
     workingHours: {
       start: { type: String },
-      end: { type: String },
+      end: { type: String }
     },
 
     // Company or Organization
@@ -37,26 +37,26 @@ const userInfoSchema = new mongoose.Schema(
       {
         email: { type: String, required: true },
         name: { type: String },
-        inviterCode: { type: String }, // the code used to join
-      },
+        inviterCode: { type: String } // the code used to join
+      }
     ],
     referredTo: [
       {
         email: { type: String, required: true },
-        name: { type: String },
-      },
+        name: { type: String }
+      }
     ],
     teamProjectName: { type: String },
     permissionsLevel: {
       type: String,
-      enum: ['admin', 'manager', 'employee', 'member'],
+      enum: ['admin', 'manager', 'employee', 'member']
     }, // updated enum
 
     // Role-based invite permissions (admin can toggle)
     invitePermissions: {
       admin: { type: Boolean, default: true },
       manager: { type: Boolean, default: true },
-      employee: { type: Boolean, default: false },
+      employee: { type: Boolean, default: false }
     },
 
     // Optional Onboarding Enhancements
@@ -64,7 +64,7 @@ const userInfoSchema = new mongoose.Schema(
     bio: { type: String },
     socialLinks: {
       linkedIn: { type: String },
-      github: { type: String },
+      github: { type: String }
     },
     profileCompletion: { type: Number, default: 0 },
 
@@ -72,11 +72,11 @@ const userInfoSchema = new mongoose.Schema(
     deviceInfo: { type: mongoose.Schema.Types.Mixed },
     authProvider: {
       type: String,
-      enum: ['Google', 'GitHub', 'Microsoft', 'Email'],
+      enum: ['Google', 'GitHub', 'Microsoft', 'Email']
     },
     signupTimestamp: { type: Date, default: Date.now },
     ipAddress: { type: String },
-    isVerified: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

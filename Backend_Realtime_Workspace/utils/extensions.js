@@ -11,7 +11,7 @@ export const allowedExtensions = {
   // Archives
   archives: ['.zip', '.rar', '.7z', '.tar', '.gz', '.bz2'],
   // Other
-  other: ['.json', '.xml', '.csv', '.md', '.yml', '.yaml'],
+  other: ['.json', '.xml', '.csv', '.md', '.yml', '.yaml']
 };
 
 // Map extensions to MIME types
@@ -80,5 +80,5 @@ export const extensionToMimeType = {
   '.csv': 'text/csv',
   '.md': 'text/markdown',
   '.yml': 'text/yaml',
-  '.yaml': 'text/yaml',
+  '.yaml': 'text/yaml'
 };

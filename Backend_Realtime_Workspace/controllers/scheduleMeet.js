@@ -275,19 +275,7 @@ export const createRecurringMeetings = async (parentMeeting) => {
  */
 export const getAllMeetings = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 10,
-      status,
-      meetingType,
-      companyName,
-      department,
-      startDate,
-      endDate,
-      search,
-      sortBy = 'meetingDate',
-      sortOrder = 'asc',
-    } = req.query;
+    const { page = 1, limit = 10, status, meetingType, companyName, department, startDate, endDate, search, sortBy = 'meetingDate', sortOrder = 'asc' } = req.query;
 
     const filter = { isDeleted: { $ne: true } };
 
@@ -306,11 +294,7 @@ export const getAllMeetings = async (req, res) => {
 
     // Search functionality
     if (search) {
-      filter.$or = [
-        { meetingTitle: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { 'organizer.name': { $regex: search, $options: 'i' } },
-      ];
+      filter.$or = [{ meetingTitle: { $regex: search, $options: 'i' } }, { description: { $regex: search, $options: 'i' } }, { 'organizer.name': { $regex: search, $options: 'i' } }];
     }
 
     const sortOptions = {};
@@ -318,10 +302,7 @@ export const getAllMeetings = async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const [meetings, totalCount] = await Promise.all([
-      ScheduleMeet.find(filter).sort(sortOptions).skip(skip).limit(parseInt(limit)).populate('recurringMeetings', 'meetingTitle meetingDate status'),
-      ScheduleMeet.countDocuments(filter),
-    ]);
+    const [meetings, totalCount] = await Promise.all([ScheduleMeet.find(filter).sort(sortOptions).skip(skip).limit(parseInt(limit)).populate('recurringMeetings', 'meetingTitle meetingDate status'), ScheduleMeet.countDocuments(filter)]);
 
     const totalPages = Math.ceil(totalCount / parseInt(limit));
 
@@ -1137,11 +1118,7 @@ export const removeAttachment = async (req, res) => {
       });
     }
 
-    const meeting = await ScheduleMeet.findOneAndUpdate(
-      { _id: id, isDeleted: { $ne: true } },
-      { $pull: { attachments: { _id: attachmentId } } },
-      { new: true }
-    );
+    const meeting = await ScheduleMeet.findOneAndUpdate({ _id: id, isDeleted: { $ne: true } }, { $pull: { attachments: { _id: attachmentId } } }, { new: true });
 
     if (!meeting) {
       return res.status(404).json({
@@ -1499,10 +1476,7 @@ export const searchMeetings = async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const [meetings, totalCount] = await Promise.all([
-      ScheduleMeet.find(filter).sort({ meetingDate: -1 }).skip(skip).limit(parseInt(limit)),
-      ScheduleMeet.countDocuments(filter),
-    ]);
+    const [meetings, totalCount] = await Promise.all([ScheduleMeet.find(filter).sort({ meetingDate: -1 }).skip(skip).limit(parseInt(limit)), ScheduleMeet.countDocuments(filter)]);
 
     res.status(200).json({
       success: true,
@@ -1760,10 +1734,7 @@ export const getUserInvitations = async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const [invitations, totalCount] = await Promise.all([
-      ScheduleMeet.find(filter).sort({ meetingDate: 1 }).skip(skip).limit(parseInt(limit)),
-      ScheduleMeet.countDocuments(filter),
-    ]);
+    const [invitations, totalCount] = await Promise.all([ScheduleMeet.find(filter).sort({ meetingDate: 1 }).skip(skip).limit(parseInt(limit)), ScheduleMeet.countDocuments(filter)]);
 
     res.status(200).json({
       success: true,
@@ -1794,19 +1765,7 @@ export const getUserInvitations = async (req, res) => {
  */
 export const createMeetingTemplate = async (req, res) => {
   try {
-    const {
-      templateName,
-      description,
-      defaultDuration,
-      defaultMeetingType,
-      defaultAgenda,
-      defaultParticipants,
-      defaultReminderSettings,
-      createdBy,
-      companyName,
-      department,
-      isPublic = false,
-    } = req.body;
+    const { templateName, description, defaultDuration, defaultMeetingType, defaultAgenda, defaultParticipants, defaultReminderSettings, createdBy, companyName, department, isPublic = false } = req.body;
 
     if (!templateName || !createdBy) {
       return res.status(400).json({
@@ -2048,7 +2007,7 @@ export const updateMeetingNotes = async (req, res) => {
     );
 
     if (!meeting) {
-      return res.status(404).json({
+ return res.status(404).json({
         success: false,
         message: 'Meeting or note not found',
       });
@@ -2248,10 +2207,7 @@ export const addFollowUpAction = async (req, res) => {
     const { action, assignedTo, dueDate, priority = 'medium', createdBy } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid meeting ID format',
-      });
+      return res.status(400).json({success: false, message: 'Invalid meeting ID format',});
     }
 
     const followUpData = {
@@ -2299,7 +2255,8 @@ export const updateFollowUpStatus = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        success: false, message: 'Invalid meeting ID format',
+        success: false,
+        message: 'Invalid meeting ID format',
       });
     }
 
@@ -2332,10 +2289,7 @@ export const updateFollowUpStatus = async (req, res) => {
     );
 
     if (!meeting) {
-      return res.status(404).json({
-        success: false,
-        message: 'Meeting or follow-up action not found',
-      });
+      return res.status(404).json({success: false, message: 'Meeting or follow-up action not found',});
     }
 
     res.status(200).json({

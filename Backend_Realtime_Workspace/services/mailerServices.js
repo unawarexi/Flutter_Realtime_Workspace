@@ -10,8 +10,8 @@ const transporter = nodemailer.createTransport({
   secure: false, // Use `true` for port 465, `false` for port 587
   auth: {
     user: process.env.SMTP_USER_EMAIL, // Your Gmail email address
-    pass: process.env.SMTP_USER_PASSWORD, // Your Gmail email password
-  },
+    pass: process.env.SMTP_USER_PASSWORD // Your Gmail email password
+  }
 });
 
 const sendMail = async (to, subject, htmlContent) => {
@@ -19,7 +19,7 @@ const sendMail = async (to, subject, htmlContent) => {
     from: process.env.SMTP_USER_EMAIL,
     to,
     subject,
-    html: htmlContent,
+    html: htmlContent
   };
 
   try {

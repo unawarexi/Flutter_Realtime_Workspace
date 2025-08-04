@@ -38,7 +38,7 @@ class EmailContentGenerator {
                             <li><strong>Download our mobile app:</strong> Stay connected on the go</li>
                             <li><strong>Set your availability:</strong> Let your team know when you're online</li>
                         </ul>
-                    `,
+                    `
         },
         {
           title: "🎯 What's Next?",
@@ -48,42 +48,42 @@ class EmailContentGenerator {
                             video conferencing, file sharing, and project management tools. Everything you need to 
                             collaborate effectively is right at your fingertips.
                         </p>
-                    `,
-        },
+                    `
+        }
       ],
       FEATURE_CARDS: [
         {
           icon: '💬',
           title: 'Instant Messaging',
-          description: 'Chat with your team in real-time',
+          description: 'Chat with your team in real-time'
         },
         {
           icon: '🎥',
           title: 'Video Meetings',
-          description: 'Face-to-face collaboration anywhere',
+          description: 'Face-to-face collaboration anywhere'
         },
         {
           icon: '📁',
           title: 'File Sharing',
-          description: 'Share and collaborate on documents',
+          description: 'Share and collaborate on documents'
         },
         {
           icon: '📊',
           title: 'Project Management',
-          description: 'Track progress and manage tasks',
-        },
+          description: 'Track progress and manage tasks'
+        }
       ],
       BUTTONS: [
         {
           text: 'Complete Setup',
           url: `${this.baseUrl}/onboarding`,
-          primary: true,
+          primary: true
         },
         {
           text: 'Download Mobile App',
           url: `${this.baseUrl}/mobile`,
-          primary: false,
-        },
+          primary: false
+        }
       ],
       ADDITIONAL_CONTENT: `
                 <div style="background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 8px; padding: 16px; margin-top: 20px;">
@@ -93,7 +93,7 @@ class EmailContentGenerator {
                     </p>
                 </div>
             `,
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(userData.userId, 'welcome'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(userData.userId, 'welcome')
     };
   }
 
@@ -112,8 +112,8 @@ class EmailContentGenerator {
         {
           text: 'Verify Email Address',
           url: userData.verificationUrl,
-          primary: true,
-        },
+          primary: true
+        }
       ],
       ADDITIONAL_CONTENT: `
                 <div style="background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 16px; margin-top: 20px;">
@@ -123,7 +123,7 @@ class EmailContentGenerator {
                     </p>
                 </div>
             `,
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(userData.userId, 'verification'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(userData.userId, 'verification')
     };
   }
 
@@ -148,15 +148,15 @@ class EmailContentGenerator {
                             <li>Request made from IP: ${userData.ipAddress || 'Unknown'}</li>
                             <li>Request time: ${userData.requestTime || new Date().toLocaleString()}</li>
                         </ul>
-                    `,
-        },
+                    `
+        }
       ],
       BUTTONS: [
         {
           text: 'Reset Password',
           url: userData.resetUrl,
-          primary: true,
-        },
+          primary: true
+        }
       ],
       ADDITIONAL_CONTENT: `
                 <div style="background: #FEF2F2; border: 1px solid #F87171; border-radius: 8px; padding: 16px; margin-top: 20px;">
@@ -167,7 +167,7 @@ class EmailContentGenerator {
                     </p>
                 </div>
             `,
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(userData.userId, 'security'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(userData.userId, 'security')
     };
   }
 
@@ -192,15 +192,15 @@ class EmailContentGenerator {
                             <li><strong>Browser:</strong> ${userData.userAgent || 'Unknown'}</li>
                             <li><strong>Location:</strong> ${userData.location || 'Unknown'}</li>
                         </ul>
-                    `,
-        },
+                    `
+        }
       ],
       BUTTONS: [
         {
           text: 'Access My Account',
           url: `${this.baseUrl}/login`,
-          primary: true,
-        },
+          primary: true
+        }
       ],
       ADDITIONAL_CONTENT: `
                 <div style="background: #FEF2F2; border: 1px solid #F87171; border-radius: 8px; padding: 16px; margin-top: 20px;">
@@ -211,7 +211,7 @@ class EmailContentGenerator {
                     </p>
                 </div>
             `,
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(userData.userId, 'security'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(userData.userId, 'security')
     };
   }
 
@@ -233,7 +233,7 @@ class EmailContentGenerator {
                             We detected ${userData.attemptCount || 5} failed login attempts from IP address 
                             ${userData.ipAddress || 'Unknown'} within a short period.
                         </p>
-                    `,
+                    `
         },
         {
           title: '🔓 How to Unlock Your Account',
@@ -243,22 +243,22 @@ class EmailContentGenerator {
                             <li>Click the button below to unlock immediately</li>
                             <li>Change your password if you suspect unauthorized access</li>
                         </ul>
-                    `,
-        },
+                    `
+        }
       ],
       BUTTONS: [
         {
           text: 'Unlock Account',
           url: userData.unlockUrl,
-          primary: true,
+          primary: true
         },
         {
           text: 'Change Password',
           url: `${this.baseUrl}/reset-password`,
-          primary: false,
-        },
+          primary: false
+        }
       ],
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(userData.userId, 'security'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(userData.userId, 'security')
     };
   }
 
@@ -288,7 +288,7 @@ class EmailContentGenerator {
                             <li><strong>Team Size:</strong> ${invitationData.memberCount || 'Multiple'} members</li>
                             <li><strong>Invited by:</strong> ${invitationData.inviterName} (${invitationData.inviterRole || 'Team Member'})</li>
                         </ul>
-                    `,
+                    `
         },
         {
           title: "💼 What You'll Get Access To",
@@ -297,20 +297,20 @@ class EmailContentGenerator {
                             Once you join, you'll be able to participate in team discussions, access shared files, 
                             join meetings, collaborate on projects, and stay updated with all team activities.
                         </p>
-                    `,
-        },
+                    `
+        }
       ],
       BUTTONS: [
         {
           text: 'Accept Invitation',
           url: invitationData.acceptUrl,
-          primary: true,
+          primary: true
         },
         {
           text: 'View Workspace',
           url: invitationData.previewUrl,
-          primary: false,
-        },
+          primary: false
+        }
       ],
       ADDITIONAL_CONTENT: `
                 <div style="background: #F0FDF4; border: 1px solid #86EFAC; border-radius: 8px; padding: 16px; margin-top: 20px;">
@@ -320,7 +320,7 @@ class EmailContentGenerator {
                     </p>
                 </div>
             `,
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(invitationData.inviteeId, 'invitations'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(invitationData.inviteeId, 'invitations')
     };
   }
 
@@ -346,22 +346,22 @@ class EmailContentGenerator {
                             <li><strong>Department:</strong> ${memberData.department || 'Not specified'}</li>
                             <li><strong>Joined:</strong> ${memberData.joinDate || new Date().toLocaleDateString()}</li>
                         </ul>
-                    `,
-        },
+                    `
+        }
       ],
       BUTTONS: [
         {
           text: 'View Workspace',
           url: `${this.baseUrl}/workspace/${memberData.workspaceId}`,
-          primary: true,
+          primary: true
         },
         {
           text: 'Send Welcome Message',
           url: `${this.baseUrl}/chat/user/${memberData.memberId}`,
-          primary: false,
-        },
+          primary: false
+        }
       ],
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(memberData.recipientId, 'workspace-updates'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(memberData.recipientId, 'workspace-updates')
     };
   }
 
@@ -391,7 +391,7 @@ class EmailContentGenerator {
                             <li><strong>Organizer:</strong> ${meetingData.organizerName}</li>
                             <li><strong>Meeting Type:</strong> ${meetingData.meetingType || 'Video Conference'}</li>
                         </ul>
-                    `,
+                    `
         },
         {
           title: '📋 Agenda',
@@ -401,7 +401,7 @@ class EmailContentGenerator {
                         <p style="color: #475569;">
                             The organizer will share the agenda closer to the meeting time.
                         </p>
-                    `,
+                    `
         },
         {
           title: '👥 Attendees',
@@ -409,25 +409,25 @@ class EmailContentGenerator {
                         <p style="color: #475569;">
                             ${meetingData.attendeeCount || 'Several'} team members have been invited to this meeting.
                         </p>
-                    `,
-        },
+                    `
+        }
       ],
       BUTTONS: [
         {
           text: 'Accept',
           url: meetingData.acceptUrl,
-          primary: true,
+          primary: true
         },
         {
           text: 'Decline',
           url: meetingData.declineUrl,
-          primary: false,
+          primary: false
         },
         {
           text: 'Maybe',
           url: meetingData.maybeUrl,
-          primary: false,
-        },
+          primary: false
+        }
       ],
       ATTACHMENTS: meetingData.attachments,
       ADDITIONAL_CONTENT: `
@@ -439,7 +439,7 @@ class EmailContentGenerator {
                     </p>
                 </div>
             `,
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(meetingData.attendeeId, 'meetings'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(meetingData.attendeeId, 'meetings')
     };
   }
 
@@ -463,22 +463,22 @@ class EmailContentGenerator {
                             <li><strong>Duration:</strong> ${meetingData.duration}</li>
                             <li><strong>Status:</strong> ${meetingData.status || 'Confirmed'}</li>
                         </ul>
-                    `,
-        },
+                    `
+        }
       ],
       BUTTONS: [
         {
           text: 'Join Meeting Now',
           url: meetingData.joinUrl,
-          primary: true,
+          primary: true
         },
         {
           text: 'View Details',
           url: meetingData.detailsUrl,
-          primary: false,
-        },
+          primary: false
+        }
       ],
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(meetingData.attendeeId, 'meeting-reminders'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(meetingData.attendeeId, 'meeting-reminders')
     };
   }
 
@@ -503,16 +503,16 @@ class EmailContentGenerator {
                             <li><strong>Organizer:</strong> ${meetingData.organizerName}</li>
                             <li><strong>Canceled On:</strong> ${meetingData.canceledDateTime || new Date().toLocaleString()}</li>
                         </ul>
-                    `,
-        },
+                    `
+        }
       ],
       BUTTONS: meetingData.rescheduleUrl
         ? [
             {
               text: 'Reschedule Meeting',
               url: meetingData.rescheduleUrl,
-              primary: true,
-            },
+              primary: true
+            }
           ]
         : [],
       ADDITIONAL_CONTENT: `
@@ -523,7 +523,7 @@ class EmailContentGenerator {
                     </p>
                 </div>
             `,
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(meetingData.attendeeId, 'meetings'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(meetingData.attendeeId, 'meetings')
     };
   }
 
@@ -554,7 +554,7 @@ class EmailContentGenerator {
                             <li><strong>Team Size:</strong> ${projectData.teamSize || 'Multiple'} members</li>
                             <li><strong>Status:</strong> ${projectData.status || 'Active'}</li>
                         </ul>
-                    `,
+                    `
         },
         {
           title: '📝 Description',
@@ -565,39 +565,39 @@ class EmailContentGenerator {
                             Project details will be shared in the project workspace. 
                             Click the button below to access all project materials.
                         </p>
-                    `,
-        },
+                    `
+        }
       ],
       FEATURE_CARDS: [
         {
           icon: '📋',
           title: 'Task Management',
-          description: 'Track your tasks and deadlines',
+          description: 'Track your tasks and deadlines'
         },
         {
           icon: '💬',
           title: 'Team Chat',
-          description: 'Communicate with team members',
+          description: 'Communicate with team members'
         },
         {
           icon: '📁',
           title: 'File Sharing',
-          description: 'Access project documents',
-        },
+          description: 'Access project documents'
+        }
       ],
       BUTTONS: [
         {
           text: 'View Project',
           url: `${this.baseUrl}/projects/${projectData.projectId}`,
-          primary: true,
+          primary: true
         },
         {
           text: 'Join Project Chat',
           url: `${this.baseUrl}/projects/${projectData.projectId}/chat`,
-          primary: false,
-        },
+          primary: false
+        }
       ],
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(projectData.assigneeId, 'project-updates'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(projectData.assigneeId, 'project-updates')
     };
   }
 
@@ -623,7 +623,7 @@ class EmailContentGenerator {
                             <li><strong>Estimated Time:</strong> ${taskData.estimatedHours || 'Not specified'}</li>
                             <li><strong>Assigned by:</strong> ${taskData.assignerName}</li>
                         </ul>
-                    `,
+                    `
         },
         {
           title: '📄 Task Description',
@@ -633,23 +633,23 @@ class EmailContentGenerator {
                         <p style="color: #475569;">
                             No additional description provided. Contact ${taskData.assignerName} for more details if needed.
                         </p>
-                    `,
-        },
+                    `
+        }
       ],
       BUTTONS: [
         {
           text: 'View Task',
           url: `${this.baseUrl}/tasks/${taskData.taskId}`,
-          primary: true,
+          primary: true
         },
         {
           text: 'Update Progress',
           url: `${this.baseUrl}/tasks/${taskData.taskId}/progress`,
-          primary: false,
-        },
+          primary: false
+        }
       ],
       ATTACHMENTS: taskData.attachments,
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(taskData.assigneeId, 'task-updates'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(taskData.assigneeId, 'task-updates')
     };
   }
 
@@ -674,20 +674,20 @@ class EmailContentGenerator {
                             <li><strong>Current Status:</strong> ${taskData.status || 'In Progress'}</li>
                             <li><strong>Project:</strong> ${taskData.projectName || 'Individual Task'}</li>
                         </ul>
-                    `,
-        },
+                    `
+        }
       ],
       BUTTONS: [
         {
           text: 'Complete Task',
           url: `${this.baseUrl}/tasks/${taskData.taskId}`,
-          primary: true,
+          primary: true
         },
         {
           text: 'Request Extension',
           url: `${this.baseUrl}/tasks/${taskData.taskId}/extend`,
-          primary: false,
-        },
+          primary: false
+        }
       ],
       ADDITIONAL_CONTENT: taskData.isOverdue
         ? `
@@ -700,7 +700,7 @@ class EmailContentGenerator {
                 </div>
             `
         : '',
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(taskData.assigneeId, 'task-reminders'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(taskData.assigneeId, 'task-reminders')
     };
   }
 
@@ -718,7 +718,7 @@ class EmailContentGenerator {
       CONTENT_SECTIONS: notificationData.sections || [],
       BUTTONS: notificationData.buttons || [],
       ADDITIONAL_CONTENT: notificationData.additionalContent || '',
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(notificationData.recipientId, 'notifications'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(notificationData.recipientId, 'notifications')
     };
   }
 
@@ -745,7 +745,7 @@ class EmailContentGenerator {
                             Posted at ${mentionData.timestamp}
                         </p>
                     </div>
-                `,
+                `
         },
         {
           title: '📍 Context',
@@ -756,22 +756,22 @@ class EmailContentGenerator {
                         <li><strong>Thread:</strong> ${mentionData.threadTitle || 'General discussion'}</li>
                         <li><strong>Participants:</strong> ${mentionData.participantCount || 'Multiple'} people</li>
                     </ul>
-                `,
-        },
+                `
+        }
       ],
       BUTTONS: [
         {
           text: 'Reply to Message',
           url: mentionData.replyUrl,
-          primary: true,
+          primary: true
         },
         {
           text: 'View Channel',
           url: mentionData.channelUrl,
-          primary: false,
-        },
+          primary: false
+        }
       ],
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(mentionData.recipientId, 'mentions'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(mentionData.recipientId, 'mentions')
     };
   }
 
@@ -798,20 +798,20 @@ class EmailContentGenerator {
                         <li><strong>Shared on:</strong> ${fileData.shareDate}</li>
                         <li><strong>Location:</strong> ${fileData.folderPath || 'Root folder'}</li>
                     </ul>
-                `,
-        },
+                `
+        }
       ],
       BUTTONS: [
         {
           text: 'View File',
           url: fileData.viewUrl,
-          primary: true,
+          primary: true
         },
         {
           text: 'Download',
           url: fileData.downloadUrl,
-          primary: false,
-        },
+          primary: false
+        }
       ],
       ADDITIONAL_CONTENT: fileData.message
         ? `
@@ -823,7 +823,7 @@ class EmailContentGenerator {
             </div>
         `
         : '',
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(fileData.recipientId, 'file-shares'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(fileData.recipientId, 'file-shares')
     };
   }
 
@@ -855,20 +855,20 @@ class EmailContentGenerator {
                         <li><strong>Date:</strong> ${paymentData.paymentDate}</li>
                         <li><strong>Next Billing:</strong> ${paymentData.nextBillingDate}</li>
                     </ul>
-                `,
-        },
+                `
+        }
       ],
       BUTTONS: [
         {
           text: 'View Invoice',
           url: paymentData.invoiceUrl,
-          primary: true,
+          primary: true
         },
         {
           text: 'Manage Subscription',
           url: `${this.baseUrl}/billing`,
-          primary: false,
-        },
+          primary: false
+        }
       ],
       ADDITIONAL_CONTENT: `
             <div style="background: #F0FDF4; border: 1px solid #86EFAC; border-radius: 8px; padding: 16px; margin-top: 20px;">
@@ -878,7 +878,7 @@ class EmailContentGenerator {
                 </p>
             </div>
         `,
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(paymentData.customerId, 'billing'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(paymentData.customerId, 'billing')
     };
   }
 
@@ -905,7 +905,7 @@ class EmailContentGenerator {
                         <li><strong>Failure Reason:</strong> ${paymentData.failureReason}</li>
                         <li><strong>Retry Date:</strong> ${paymentData.retryDate}</li>
                     </ul>
-                `,
+                `
         },
         {
           title: '🔧 How to Fix This',
@@ -916,20 +916,20 @@ class EmailContentGenerator {
                         <li>Check that your billing address is correct</li>
                         <li>Contact your bank if the issue persists</li>
                     </ul>
-                `,
-        },
+                `
+        }
       ],
       BUTTONS: [
         {
           text: 'Update Payment Method',
           url: `${this.baseUrl}/billing/payment-methods`,
-          primary: true,
+          primary: true
         },
         {
           text: 'Retry Payment',
           url: paymentData.retryUrl,
-          primary: false,
-        },
+          primary: false
+        }
       ],
       ADDITIONAL_CONTENT: `
             <div style="background: #FEF2F2; border: 1px solid #F87171; border-radius: 8px; padding: 16px; margin-top: 20px;">
@@ -940,7 +940,7 @@ class EmailContentGenerator {
                 </p>
             </div>
         `,
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(paymentData.customerId, 'billing'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(paymentData.customerId, 'billing')
     };
   }
 
@@ -966,39 +966,39 @@ class EmailContentGenerator {
                         <li><strong>Payment Method:</strong> ${subscriptionData.paymentMethod}</li>
                         <li><strong>Users:</strong> ${subscriptionData.userCount} active users</li>
                     </ul>
-                `,
-        },
+                `
+        }
       ],
       FEATURE_CARDS: [
         {
           icon: '✨',
           title: 'Premium Features',
-          description: 'Unlimited storage and advanced tools',
+          description: 'Unlimited storage and advanced tools'
         },
         {
           icon: '🔒',
           title: 'Enhanced Security',
-          description: 'Advanced security and compliance features',
+          description: 'Advanced security and compliance features'
         },
         {
           icon: '📞',
           title: 'Priority Support',
-          description: '24/7 dedicated customer support',
-        },
+          description: '24/7 dedicated customer support'
+        }
       ],
       BUTTONS: [
         {
           text: 'Manage Subscription',
           url: `${this.baseUrl}/billing`,
-          primary: true,
+          primary: true
         },
         {
           text: 'Update Payment Method',
           url: `${this.baseUrl}/billing/payment-methods`,
-          primary: false,
-        },
+          primary: false
+        }
       ],
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(subscriptionData.customerId, 'billing-reminders'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(subscriptionData.customerId, 'billing-reminders')
     };
   }
 
@@ -1024,7 +1024,7 @@ class EmailContentGenerator {
                         <li><strong>Last Billing:</strong> ${subscriptionData.lastBillingDate}</li>
                         <li><strong>Reason:</strong> ${subscriptionData.cancellationReason || 'Not specified'}</li>
                     </ul>
-                `,
+                `
         },
         {
           title: '💾 What Happens to Your Data',
@@ -1035,20 +1035,20 @@ class EmailContentGenerator {
                         <li>Free plan limits will apply after the access period</li>
                         <li>Premium features will be disabled</li>
                     </ul>
-                `,
-        },
+                `
+        }
       ],
       BUTTONS: [
         {
           text: 'Reactivate Subscription',
           url: `${this.baseUrl}/billing/reactivate`,
-          primary: true,
+          primary: true
         },
         {
           text: 'Export Data',
           url: `${this.baseUrl}/export`,
-          primary: false,
-        },
+          primary: false
+        }
       ],
       ADDITIONAL_CONTENT: `
             <div style="background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 16px; margin-top: 20px;">
@@ -1059,7 +1059,7 @@ class EmailContentGenerator {
                 </p>
             </div>
         `,
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(subscriptionData.customerId, 'billing'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(subscriptionData.customerId, 'billing')
     };
   }
 
@@ -1088,18 +1088,15 @@ class EmailContentGenerator {
                         <li><strong>Timezone:</strong> ${maintenanceData.timezone || 'UTC'}</li>
                         <li><strong>Type:</strong> ${maintenanceData.maintenanceType || 'System Update'}</li>
                     </ul>
-                `,
+                `
         },
         {
           title: '⚠️ Expected Impact',
           content: `
                     <ul style="margin-left: 20px; color: #475569;">
-                        ${
-                          maintenanceData.impactedServices?.map((service) => `<li><strong>${service.name}:</strong> ${service.impact}</li>`).join('') ||
-                          '<li>Minimal service disruption expected</li>'
-                        }
+                        ${maintenanceData.impactedServices?.map((service) => `<li><strong>${service.name}:</strong> ${service.impact}</li>`).join('') || '<li>Minimal service disruption expected</li>'}
                     </ul>
-                `,
+                `
         },
         {
           title: "✨ What's New",
@@ -1107,15 +1104,15 @@ class EmailContentGenerator {
                     <p style="color: #475569;">
                         ${maintenanceData.improvements || 'Performance improvements and bug fixes to enhance your TeamSpot experience.'}
                     </p>
-                `,
-        },
+                `
+        }
       ],
       BUTTONS: [
         {
           text: 'View Status Page',
           url: `${this.baseUrl}/status`,
-          primary: true,
-        },
+          primary: true
+        }
       ],
       ADDITIONAL_CONTENT: `
             <div style="background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 16px; margin-top: 20px;">
@@ -1126,7 +1123,7 @@ class EmailContentGenerator {
                 </p>
             </div>
         `,
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(maintenanceData.recipientId, 'system-updates'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(maintenanceData.recipientId, 'system-updates')
     };
   }
 
@@ -1152,7 +1149,7 @@ class EmailContentGenerator {
                         <li><strong>Device:</strong> ${securityData.device || 'Unknown'}</li>
                         <li><strong>Browser:</strong> ${securityData.browser || 'Unknown'}</li>
                     </ul>
-                `,
+                `
         },
         {
           title: '🛡️ Recommended Actions',
@@ -1163,20 +1160,20 @@ class EmailContentGenerator {
                         <li>Review your recent account activity</li>
                         <li>Sign out of all sessions if concerned</li>
                     </ul>
-                `,
-        },
+                `
+        }
       ],
       BUTTONS: [
         {
           text: securityData.wasYou ? 'This Was Me' : 'Secure My Account',
           url: securityData.wasYou ? securityData.confirmUrl : securityData.secureUrl,
-          primary: true,
+          primary: true
         },
         {
           text: 'View Account Activity',
           url: `${this.baseUrl}/security/activity`,
-          primary: false,
-        },
+          primary: false
+        }
       ],
       ADDITIONAL_CONTENT: `
             <div style="background: #FEF2F2; border: 1px solid #F87171; border-radius: 8px; padding: 16px; margin-top: 20px;">
@@ -1188,7 +1185,7 @@ class EmailContentGenerator {
                 </p>
             </div>
         `,
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(securityData.recipientId, 'security-alerts'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(securityData.recipientId, 'security-alerts')
     };
   }
 
@@ -1219,19 +1216,15 @@ class EmailContentGenerator {
                         <li><strong>Projects updated:</strong> ${digestData.projectsUpdated || 0}</li>
                         <li><strong>Active days:</strong> ${digestData.activeDays || 0}/7</li>
                     </ul>
-                `,
+                `
         },
         {
           title: '🏆 Top Achievements',
           content: `
                     <ul style="margin-left: 20px; color: #475569;">
-                        ${
-                          digestData.achievements
-                            ?.map((achievement) => `<li><strong>${achievement.title}:</strong> ${achievement.description}</li>`)
-                            .join('') || '<li>Keep up the great work!</li>'
-                        }
+                        ${digestData.achievements?.map((achievement) => `<li><strong>${achievement.title}:</strong> ${achievement.description}</li>`).join('') || '<li>Keep up the great work!</li>'}
                     </ul>
-                `,
+                `
         },
         {
           title: '📅 Upcoming This Week',
@@ -1241,28 +1234,28 @@ class EmailContentGenerator {
                         <li><strong>Task deadlines:</strong> ${digestData.upcomingDeadlines || 0}</li>
                         <li><strong>Project milestones:</strong> ${digestData.upcomingMilestones || 0}</li>
                     </ul>
-                `,
-        },
+                `
+        }
       ],
       FEATURE_CARDS:
         digestData.topWorkspaces?.map((workspace) => ({
           icon: '🏢',
           title: workspace.name,
-          description: `${workspace.activity} activities this week`,
+          description: `${workspace.activity} activities this week`
         })) || [],
       BUTTONS: [
         {
           text: 'View Full Dashboard',
           url: `${this.baseUrl}/dashboard`,
-          primary: true,
+          primary: true
         },
         {
           text: 'Team Analytics',
           url: `${this.baseUrl}/analytics`,
-          primary: false,
-        },
+          primary: false
+        }
       ],
-      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(digestData.recipientId, 'weekly-digest'),
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(digestData.recipientId, 'weekly-digest')
     };
   }
 
@@ -1316,7 +1309,7 @@ class EmailContentGenerator {
       passwordReset: ['fullName', 'resetUrl', 'userId'],
       meetingInvitation: ['attendeeName', 'organizerName', 'meetingTitle', 'meetingDate', 'meetingTime'],
       taskAssignment: ['assigneeName', 'taskTitle', 'dueDate', 'assignerName'],
-      workspaceInvitation: ['inviteeEmail', 'workspaceName', 'inviterName', 'acceptUrl'],
+      workspaceInvitation: ['inviteeEmail', 'workspaceName', 'inviterName', 'acceptUrl']
     };
 
     const required = requiredFields[emailType];

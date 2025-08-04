@@ -23,7 +23,7 @@ export const createProject = async (req, res) => {
       startDate,
       endDate,
       customFields,
-      key, // allow custom key
+      key // allow custom key
     } = req.body;
 
     // Get the correct user ID from the auth middleware
@@ -57,7 +57,7 @@ export const createProject = async (req, res) => {
     if (!name /*|| !teamId*/) {
       return res.status(400).json({
         status: 'error',
-        message: 'Project name is required',
+        message: 'Project name is required'
       });
     }
 
@@ -89,9 +89,9 @@ export const createProject = async (req, res) => {
           title: 'Project Created',
           description: 'Project was created',
           date: new Date(),
-          type: 'created',
-        },
-      ],
+          type: 'created'
+        }
+      ]
     });
 
     // Handle multiple file uploads
@@ -125,7 +125,7 @@ export const createProject = async (req, res) => {
             height: uploadResult.height || null,
             duration: uploadResult.duration || null,
             uploadedAt: new Date(),
-            uploadedBy: mongoId,
+            uploadedBy: mongoId
           };
 
           return attachment;
@@ -153,14 +153,14 @@ export const createProject = async (req, res) => {
             title: 'Attachment Added',
             description: `File "${attachment.filename}" was uploaded`,
             date: new Date(),
-            type: 'attachment',
+            type: 'attachment'
           });
         });
       } catch (uploadError) {
         return res.status(500).json({
           status: 'error',
           message: 'Failed to upload one or more attachments',
-          error: uploadError.message,
+          error: uploadError.message
         });
       }
     }
@@ -172,20 +172,20 @@ export const createProject = async (req, res) => {
       { path: 'createdBy', select: 'name email avatar' },
       { path: 'collaborators', select: 'name email avatar' },
       { path: 'members', select: 'name email avatar' },
-      { path: 'teamId', select: 'name description' },
+      { path: 'teamId', select: 'name description' }
     ]);
 
     res.status(201).json({
       status: 'success',
       message: 'Project created successfully',
-      data: project,
+      data: project
     });
   } catch (error) {
     console.error('Create project error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to create project',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -210,11 +210,7 @@ export const getProjects = async (req, res) => {
 
     // Search functionality
     if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { key: { $regex: search, $options: 'i' } },
-      ];
+      filter.$or = [{ name: { $regex: search, $options: 'i' } }, { description: { $regex: search, $options: 'i' } }, { key: { $regex: search, $options: 'i' } }];
     }
 
     // Calculate pagination
@@ -228,7 +224,7 @@ export const getProjects = async (req, res) => {
         { path: 'createdBy', select: 'name email avatar' },
         { path: 'collaborators', select: 'name email avatar' },
         { path: 'members', select: 'name email avatar' },
-        { path: 'teamId', select: 'name description' },
+        { path: 'teamId', select: 'name description' }
       ])
       .sort(sortOptions)
       .skip(skip)
@@ -246,15 +242,15 @@ export const getProjects = async (req, res) => {
         totalItems: total,
         itemsPerPage: parseInt(limit),
         hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
+        hasPrevPage: page > 1
+      }
     });
   } catch (error) {
     console.error('Get projects error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch projects',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -269,7 +265,7 @@ export const getProjectById = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid project ID',
+        message: 'Invalid project ID'
       });
     }
 
@@ -277,13 +273,13 @@ export const getProjectById = async (req, res) => {
       { path: 'createdBy', select: 'name email avatar' },
       { path: 'collaborators', select: 'name email avatar' },
       { path: 'members', select: 'name email avatar' },
-      { path: 'teamId', select: 'name description' },
+      { path: 'teamId', select: 'name description' }
     ]);
 
     if (!project) {
       return res.status(404).json({
         status: 'error',
-        message: 'Project not found',
+        message: 'Project not found'
       });
     }
 
@@ -293,14 +289,14 @@ export const getProjectById = async (req, res) => {
 
     res.status(200).json({
       status: 'success',
-      data: project,
+      data: project
     });
   } catch (error) {
     console.error('Get project by ID error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch project',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -316,7 +312,7 @@ export const updateProject = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid project ID',
+        message: 'Invalid project ID'
       });
     }
 
@@ -325,7 +321,7 @@ export const updateProject = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         status: 'error',
-        message: 'Project not found',
+        message: 'Project not found'
       });
     }
 
@@ -351,30 +347,30 @@ export const updateProject = async (req, res) => {
                   title: 'Project Updated',
                   description: changes.join(', '),
                   date: new Date(),
-                  type: 'updated',
-                },
+                  type: 'updated'
+                }
               }
-            : undefined,
+            : undefined
       },
       { new: true, runValidators: true }
     ).populate([
       { path: 'createdBy', select: 'name email avatar' },
       { path: 'collaborators', select: 'name email avatar' },
       { path: 'members', select: 'name email avatar' },
-      { path: 'teamId', select: 'name description' },
+      { path: 'teamId', select: 'name description' }
     ]);
 
     res.status(200).json({
       status: 'success',
       message: 'Project updated successfully',
-      data: updatedProject,
+      data: updatedProject
     });
   } catch (error) {
     console.error('Update project error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to update project',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -389,7 +385,7 @@ export const deleteProject = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid project ID',
+        message: 'Invalid project ID'
       });
     }
 
@@ -397,7 +393,7 @@ export const deleteProject = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         status: 'error',
-        message: 'Project not found',
+        message: 'Project not found'
       });
     }
 
@@ -418,14 +414,14 @@ export const deleteProject = async (req, res) => {
 
     res.status(200).json({
       status: 'success',
-      message: 'Project deleted successfully',
+      message: 'Project deleted successfully'
     });
   } catch (error) {
     console.error('Delete project error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to delete project',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -440,14 +436,14 @@ export const uploadAttachment = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid project ID',
+        message: 'Invalid project ID'
       });
     }
 
     if (!req.file) {
       return res.status(400).json({
         status: 'error',
-        message: 'No file uploaded',
+        message: 'No file uploaded'
       });
     }
 
@@ -455,7 +451,7 @@ export const uploadAttachment = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         status: 'error',
-        message: 'Project not found',
+        message: 'Project not found'
       });
     }
 
@@ -476,7 +472,7 @@ export const uploadAttachment = async (req, res) => {
       height: uploadResult.height,
       duration: uploadResult.duration,
       uploadedAt: new Date(),
-      uploadedBy: req.user.id,
+      uploadedBy: req.user.id
     };
 
     // Add to attachments array (incrementally)
@@ -487,7 +483,7 @@ export const uploadAttachment = async (req, res) => {
       title: 'Attachment Added',
       description: `File "${attachment.filename}" was uploaded`,
       date: new Date(),
-      type: 'attachment',
+      type: 'attachment'
     });
 
     await project.save();
@@ -497,15 +493,15 @@ export const uploadAttachment = async (req, res) => {
       message: 'File uploaded successfully',
       data: {
         attachment,
-        attachmentCount: project.attachments.length,
-      },
+        attachmentCount: project.attachments.length
+      }
     });
   } catch (error) {
     console.error('Upload attachment error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to upload attachment',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -520,7 +516,7 @@ export const deleteAttachment = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid project ID',
+        message: 'Invalid project ID'
       });
     }
 
@@ -528,7 +524,7 @@ export const deleteAttachment = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         status: 'error',
-        message: 'Project not found',
+        message: 'Project not found'
       });
     }
 
@@ -538,7 +534,7 @@ export const deleteAttachment = async (req, res) => {
     if (attachmentIndex === -1) {
       return res.status(404).json({
         status: 'error',
-        message: 'Attachment not found',
+        message: 'Attachment not found'
       });
     }
 
@@ -559,7 +555,7 @@ export const deleteAttachment = async (req, res) => {
       title: 'Attachment Removed',
       description: `File "${attachment.filename}" was deleted`,
       date: new Date(),
-      type: 'attachment',
+      type: 'attachment'
     });
 
     await project.save();
@@ -568,15 +564,15 @@ export const deleteAttachment = async (req, res) => {
       status: 'success',
       message: 'Attachment deleted successfully',
       data: {
-        attachmentCount: project.attachments.length,
-      },
+        attachmentCount: project.attachments.length
+      }
     });
   } catch (error) {
     console.error('Delete attachment error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to delete attachment',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -592,7 +588,7 @@ export const getProjectAttachments = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid project ID',
+        message: 'Invalid project ID'
       });
     }
 
@@ -600,7 +596,7 @@ export const getProjectAttachments = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         status: 'error',
-        message: 'Project not found',
+        message: 'Project not found'
       });
     }
 
@@ -624,22 +620,22 @@ export const getProjectAttachments = async (req, res) => {
         project: {
           id: project._id,
           name: project.name,
-          key: project.key,
-        },
+          key: project.key
+        }
       },
       pagination: {
         currentPage: parseInt(page),
         totalPages,
         totalItems: total,
-        itemsPerPage: parseInt(limit),
-      },
+        itemsPerPage: parseInt(limit)
+      }
     });
   } catch (error) {
     console.error('Get attachments error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch attachments',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -654,7 +650,7 @@ export const toggleProjectStar = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid project ID',
+        message: 'Invalid project ID'
       });
     }
 
@@ -662,7 +658,7 @@ export const toggleProjectStar = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         status: 'error',
-        message: 'Project not found',
+        message: 'Project not found'
       });
     }
 
@@ -674,7 +670,7 @@ export const toggleProjectStar = async (req, res) => {
       title: project.starred ? 'Project Starred' : 'Project Unstarred',
       description: `Project was ${project.starred ? 'added to' : 'removed from'} starred projects`,
       date: new Date(),
-      type: 'starred',
+      type: 'starred'
     });
 
     await project.save();
@@ -683,15 +679,15 @@ export const toggleProjectStar = async (req, res) => {
       status: 'success',
       message: `Project ${project.starred ? 'starred' : 'unstarred'} successfully`,
       data: {
-        starred: project.starred,
-      },
+        starred: project.starred
+      }
     });
   } catch (error) {
     console.error('Toggle star error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to toggle star status',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -706,7 +702,7 @@ export const toggleProjectArchive = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid project ID',
+        message: 'Invalid project ID'
       });
     }
 
@@ -714,7 +710,7 @@ export const toggleProjectArchive = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         status: 'error',
-        message: 'Project not found',
+        message: 'Project not found'
       });
     }
 
@@ -727,7 +723,7 @@ export const toggleProjectArchive = async (req, res) => {
       title: project.archived ? 'Project Archived' : 'Project Restored',
       description: `Project was ${project.archived ? 'archived' : 'restored from archive'}`,
       date: new Date(),
-      type: 'archived',
+      type: 'archived'
     });
 
     await project.save();
@@ -737,15 +733,15 @@ export const toggleProjectArchive = async (req, res) => {
       message: `Project ${project.archived ? 'archived' : 'restored'} successfully`,
       data: {
         archived: project.archived,
-        status: project.status,
-      },
+        status: project.status
+      }
     });
   } catch (error) {
     console.error('Toggle archive error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to toggle archive status',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -761,14 +757,14 @@ export const updateProjectProgress = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid project ID',
+        message: 'Invalid project ID'
       });
     }
 
     if (progress < 0 || progress > 1) {
       return res.status(400).json({
         status: 'error',
-        message: 'Progress must be between 0 and 1',
+        message: 'Progress must be between 0 and 1'
       });
     }
 
@@ -776,7 +772,7 @@ export const updateProjectProgress = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         status: 'error',
-        message: 'Project not found',
+        message: 'Project not found'
       });
     }
 
@@ -797,7 +793,7 @@ export const updateProjectProgress = async (req, res) => {
       title: 'Progress Updated',
       description: `Progress updated from ${Math.round(oldProgress * 100)}% to ${Math.round(progress * 100)}%`,
       date: new Date(),
-      type: 'progress',
+      type: 'progress'
     });
 
     await project.save();
@@ -808,15 +804,15 @@ export const updateProjectProgress = async (req, res) => {
       data: {
         progress: project.progress,
         status: project.status,
-        completed: project.completed,
-      },
+        completed: project.completed
+      }
     });
   } catch (error) {
     console.error('Update progress error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to update project progress',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -832,14 +828,14 @@ export const updateProjectCollaborators = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid project ID',
+        message: 'Invalid project ID'
       });
     }
 
     if (!Array.isArray(collaboratorIds) || collaboratorIds.length === 0) {
       return res.status(400).json({
         status: 'error',
-        message: 'Collaborator IDs must be provided as an array',
+        message: 'Collaborator IDs must be provided as an array'
       });
     }
 
@@ -847,7 +843,7 @@ export const updateProjectCollaborators = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         status: 'error',
-        message: 'Project not found',
+        message: 'Project not found'
       });
     }
 
@@ -868,7 +864,7 @@ export const updateProjectCollaborators = async (req, res) => {
     } else {
       return res.status(400).json({
         status: 'error',
-        message: "Invalid action. Use 'add' or 'remove'",
+        message: "Invalid action. Use 'add' or 'remove'"
       });
     }
 
@@ -877,7 +873,7 @@ export const updateProjectCollaborators = async (req, res) => {
       title: 'Collaborators Updated',
       description: timelineDescription,
       date: new Date(),
-      type: 'collaborators',
+      type: 'collaborators'
     });
 
     await project.save();
@@ -890,15 +886,15 @@ export const updateProjectCollaborators = async (req, res) => {
       message,
       data: {
         collaborators: project.collaborators,
-        collaboratorCount: project.collaborators.length,
-      },
+        collaboratorCount: project.collaborators.length
+      }
     });
   } catch (error) {
     console.error('Update collaborators error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to update collaborators',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -914,14 +910,14 @@ export const addTimelineEvent = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid project ID',
+        message: 'Invalid project ID'
       });
     }
 
     if (!title) {
       return res.status(400).json({
         status: 'error',
-        message: 'Timeline event title is required',
+        message: 'Timeline event title is required'
       });
     }
 
@@ -929,7 +925,7 @@ export const addTimelineEvent = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         status: 'error',
-        message: 'Project not found',
+        message: 'Project not found'
       });
     }
 
@@ -938,7 +934,7 @@ export const addTimelineEvent = async (req, res) => {
       title,
       description: description || '',
       date: new Date(),
-      type: type || 'custom',
+      type: type || 'custom'
     };
 
     project.timeline.push(timelineEvent);
@@ -949,15 +945,15 @@ export const addTimelineEvent = async (req, res) => {
       message: 'Timeline event added successfully',
       data: {
         timelineEvent: project.timeline[project.timeline.length - 1],
-        timelineCount: project.timeline.length,
-      },
+        timelineCount: project.timeline.length
+      }
     });
   } catch (error) {
     console.error('Add timeline event error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to add timeline event',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -973,7 +969,7 @@ export const getProjectTimeline = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid project ID',
+        message: 'Invalid project ID'
       });
     }
 
@@ -981,7 +977,7 @@ export const getProjectTimeline = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         status: 'error',
-        message: 'Project not found',
+        message: 'Project not found'
       });
     }
 
@@ -1005,22 +1001,22 @@ export const getProjectTimeline = async (req, res) => {
         project: {
           id: project._id,
           name: project.name,
-          key: project.key,
-        },
+          key: project.key
+        }
       },
       pagination: {
         currentPage: parseInt(page),
         totalPages,
         totalItems: total,
-        itemsPerPage: parseInt(limit),
-      },
+        itemsPerPage: parseInt(limit)
+      }
     });
   } catch (error) {
     console.error('Get timeline error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch project timeline',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -1041,17 +1037,17 @@ export const getProjectStats = async (req, res) => {
           total: { $sum: 1 },
           active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
           completed: {
-            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
           },
           archived: { $sum: { $cond: ['$archived', 1, 0] } },
           starred: { $sum: { $cond: ['$starred', 1, 0] } },
           highPriority: {
-            $sum: { $cond: [{ $eq: ['$priority', 'high'] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ['$priority', 'high'] }, 1, 0] }
           },
           averageProgress: { $avg: '$progress' },
-          totalAttachments: { $sum: { $size: '$attachments' } },
-        },
-      },
+          totalAttachments: { $sum: { $size: '$attachments' } }
+        }
+      }
     ]);
 
     const result = stats[0] || {
@@ -1062,29 +1058,25 @@ export const getProjectStats = async (req, res) => {
       starred: 0,
       highPriority: 0,
       averageProgress: 0,
-      totalAttachments: 0,
+      totalAttachments: 0
     };
 
     // Get recent projects
-    const recentProjects = await Project.find(filter)
-      .sort({ lastViewed: -1 })
-      .limit(5)
-      .select('name key lastViewed progress status')
-      .populate('createdBy', 'name email');
+    const recentProjects = await Project.find(filter).sort({ lastViewed: -1 }).limit(5).select('name key lastViewed progress status').populate('createdBy', 'name email');
 
     res.status(200).json({
       status: 'success',
       data: {
         stats: result,
-        recentProjects,
-      },
+        recentProjects
+      }
     });
   } catch (error) {
     console.error('Get stats error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch project statistics',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -1100,7 +1092,7 @@ export const duplicateProject = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid project ID',
+        message: 'Invalid project ID'
       });
     }
 
@@ -1108,7 +1100,7 @@ export const duplicateProject = async (req, res) => {
     if (!originalProject) {
       return res.status(404).json({
         status: 'error',
-        message: 'Project not found',
+        message: 'Project not found'
       });
     }
 
@@ -1139,9 +1131,9 @@ export const duplicateProject = async (req, res) => {
           title: 'Project Created',
           description: `Project duplicated from ${originalProject.name} (${originalProject.key})`,
           date: new Date(),
-          type: 'created',
-        },
-      ],
+          type: 'created'
+        }
+      ]
     };
 
     const duplicatedProject = new Project(duplicateData);
@@ -1152,20 +1144,20 @@ export const duplicateProject = async (req, res) => {
       { path: 'createdBy', select: 'name email avatar' },
       { path: 'collaborators', select: 'name email avatar' },
       { path: 'members', select: 'name email avatar' },
-      { path: 'teamId', select: 'name description' },
+      { path: 'teamId', select: 'name description' }
     ]);
 
     res.status(201).json({
       status: 'success',
       message: 'Project duplicated successfully',
-      data: duplicatedProject,
+      data: duplicatedProject
     });
   } catch (error) {
     console.error('Duplicate project error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to duplicate project',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -1178,13 +1170,13 @@ export const getNewProjectKey = (req, res) => {
     const key = generateProjectKey();
     res.status(200).json({
       status: 'success',
-      projectKey: key,
+      projectKey: key
     });
   } catch (error) {
     res.status(500).json({
       status: 'error',
       message: 'Failed to generate project key',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -1197,13 +1189,13 @@ export const getNewTeamId = (req, res) => {
     const teamId = generateTeamId();
     res.status(200).json({
       status: 'success',
-      teamId,
+      teamId
     });
   } catch (error) {
     res.status(500).json({
       status: 'error',
       message: 'Failed to generate team id',
-      error: error.message,
+      error: error.message
     });
   }
 };

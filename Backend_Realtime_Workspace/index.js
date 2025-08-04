@@ -50,7 +50,7 @@ app.use('/api/v1/schedule-meet', scheduleMeetRoutes);
 app.use((req, res, next) => {
   res.status(404).json({
     status: 'fail',
-    message: `Can't find ${req.originalUrl} on this server!`,
+    message: `Can't find ${req.originalUrl} on this server!`
   });
 });
 
@@ -60,7 +60,7 @@ app.use((err, req, res, next) => {
 
   res.status(err.statusCode).json({
     status: err.status,
-    message: err.message,
+    message: err.message
   });
 });
 

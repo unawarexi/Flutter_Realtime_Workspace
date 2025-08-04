@@ -12,7 +12,7 @@ cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
+  secure: true
 });
 
 // Configure multer for memory storage (no local files)
@@ -53,8 +53,8 @@ export const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 20 * 1024 * 1024, // 20MB limit
-  },
+    fileSize: 20 * 1024 * 1024 // 20MB limit
+  }
 });
 
 // Multer error handler middleware
@@ -63,17 +63,17 @@ export function multerErrorHandler(err, req, res, next) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
         status: 'error',
-        message: 'File too large. Maximum size is 20MB.',
+        message: 'File too large. Maximum size is 20MB.'
       });
     }
     return res.status(400).json({
       status: 'error',
-      message: err.message,
+      message: err.message
     });
   } else if (err) {
     return res.status(400).json({
       status: 'error',
-      message: err.message,
+      message: err.message
     });
   }
   next();
@@ -114,7 +114,7 @@ export const uploadToCloudinary = async (fileBuffer, originalName, folder = '/pr
       folder,
       resourceType,
       fileExtension,
-      fileName,
+      fileName
     });
 
     const uploadOptions = {
@@ -122,7 +122,7 @@ export const uploadToCloudinary = async (fileBuffer, originalName, folder = '/pr
       resource_type: resourceType,
       public_id: `${fileName}_${Date.now()}`,
       use_filename: true,
-      unique_filename: true,
+      unique_filename: true
     };
 
     // Add transformations for images and videos
@@ -145,7 +145,7 @@ export const uploadToCloudinary = async (fileBuffer, originalName, folder = '/pr
             console.log('Cloudinary upload success:', {
               public_id: result.public_id,
               secure_url: result.secure_url,
-              folder: result.folder,
+              folder: result.folder
             });
             resolve(result);
           }
@@ -171,7 +171,7 @@ export const uploadToCloudinary = async (fileBuffer, originalName, folder = '/pr
       original_filename: result.original_filename,
       created_at: result.created_at,
       type: resourceType,
-      filename: originalName,
+      filename: originalName
     };
   } catch (error) {
     console.error('Cloudinary upload error:', error);
@@ -188,7 +188,7 @@ export const uploadToCloudinary = async (fileBuffer, originalName, folder = '/pr
 export const deleteFromCloudinary = async (publicId, resourceType = 'image') => {
   try {
     const result = await cloudinary.uploader.destroy(publicId, {
-      resource_type: resourceType,
+      resource_type: resourceType
     });
     return result;
   } catch (error) {
@@ -210,7 +210,7 @@ export const getOptimizedFileUrl = (publicId, resourceType = 'image', transforma
     ...transformations,
     secure: true,
     quality: 'auto',
-    fetch_format: 'auto',
+    fetch_format: 'auto'
   });
 };
 
@@ -223,7 +223,7 @@ export const getOptimizedFileUrl = (publicId, resourceType = 'image', transforma
 export const getFileMetadata = async (publicId, resourceType = 'image') => {
   try {
     const result = await cloudinary.api.resource(publicId, {
-      resource_type: resourceType,
+      resource_type: resourceType
     });
     return result;
   } catch (error) {

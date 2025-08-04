@@ -48,13 +48,13 @@ export async function validateReferralCode(code) {
       return {
         valid: false,
         reason: 'Code expired, regenerated',
-        regenerated: user.inviteCode,
+        regenerated: user.inviteCode
       };
     } catch (error) {
       return {
         valid: false,
         reason: 'Code expired and regeneration failed',
-        error: error.message,
+        error: error.message
       };
     }
   }
@@ -72,7 +72,7 @@ export async function useReferralCode({ memberUser, code }) {
     return {
       success: false,
       reason: validation.regenerated ? 'Code expired, regenerated' : 'Invalid code',
-      regenerated: validation.regenerated,
+      regenerated: validation.regenerated
     };
   }
 
@@ -90,7 +90,7 @@ export async function useReferralCode({ memberUser, code }) {
     memberUser.invitedBy.push({
       email: owner.email,
       name: owner.fullName || owner.displayName || owner.email,
-      inviterCode: code,
+      inviterCode: code
     });
     console.log(`[useReferralCode] Added ${owner.email} to ${memberUser.email}'s invitedBy`);
   }
@@ -101,7 +101,7 @@ export async function useReferralCode({ memberUser, code }) {
   if (!alreadyReferred) {
     owner.referredTo.push({
       email: memberUser.email,
-      name: memberUser.fullName || memberUser.displayName || memberUser.email,
+      name: memberUser.fullName || memberUser.displayName || memberUser.email
     });
     console.log(`[useReferralCode] Added ${memberUser.email} to ${owner.email}'s referredTo`);
   }
@@ -142,7 +142,7 @@ export async function autoRegenerateExpiredCodes() {
   const now = new Date();
   const users = await UserInfo.find({
     inviteCodeExpiry: { $lt: now },
-    inviteCode: { $exists: true, $ne: null },
+    inviteCode: { $exists: true, $ne: null }
   });
 
   console.log(`[autoRegenerateExpiredCodes] Found ${users.length} expired codes`);
@@ -170,7 +170,7 @@ export async function getReferralStats(userId) {
     inviteCodeExpiry: user.inviteCodeExpiry,
     directReferrals: user.referredTo ? user.referredTo.length : 0,
     invitedBy: user.invitedBy || [],
-    referredTo: user.referredTo || [],
+    referredTo: user.referredTo || []
   };
 
   // Calculate total referrals in the chain (recursive)

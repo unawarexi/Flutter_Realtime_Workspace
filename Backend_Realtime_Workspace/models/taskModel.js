@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const checklistItemSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
-    completed: { type: Boolean, default: false },
+    completed: { type: Boolean, default: false }
   },
   { _id: false }
 );
@@ -12,7 +12,7 @@ const commentSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'UserInfo', required: true },
     content: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: Date.now }
   },
   { _id: false }
 );
@@ -30,7 +30,7 @@ const taskSchema = new mongoose.Schema(
     comments: [commentSchema],
     dueDate: { type: Date },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'UserInfo', required: true },
-    attachments: [{ type: String }], // File URLs
+    attachments: [{ type: String }] // File URLs
   },
   { timestamps: true }
 );

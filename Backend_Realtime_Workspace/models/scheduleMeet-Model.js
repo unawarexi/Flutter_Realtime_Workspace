@@ -7,15 +7,15 @@ const scheduleMeetSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxLength: 200,
+      maxLength: 200
     },
     description: {
       type: String,
-      maxLength: 1000,
+      maxLength: 1000
     },
     agenda: {
       type: String,
-      maxLength: 2000,
+      maxLength: 2000
     },
 
     // Meeting Organizer (Admin/Manager who created the meeting)
@@ -25,48 +25,48 @@ const scheduleMeetSchema = new mongoose.Schema(
       email: { type: String, required: true },
       profilePicture: { type: String },
       roleTitle: { type: String },
-      department: { type: String },
+      department: { type: String }
     },
 
     // Date & Time Information
     meetingDate: {
       type: Date,
-      required: true,
+      required: true
     },
     meetingTime: {
       start: { type: String, required: true }, // Format: "14:30"
-      end: { type: String, required: true }, // Format: "15:30"
+      end: { type: String, required: true } // Format: "15:30"
     },
     duration: {
       type: Number, // Duration in minutes (changed from String enum to Number)
       required: true,
       min: 5, // Minimum 5 minutes
-      max: 480, // Maximum 8 hours
+      max: 480 // Maximum 8 hours
     },
     timezone: {
       type: String,
-      default: 'UTC',
+      default: 'UTC'
     },
 
     // Recurrence Settings
     repeatOption: {
       type: String,
       enum: ['None', 'Daily', 'Weekly', 'Bi-weekly', 'Monthly'],
-      default: 'None',
+      default: 'None'
     },
     recurrenceEndDate: { type: Date }, // When recurring meetings should stop
     recurringMeetings: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'ScheduleMeet',
-      },
+        ref: 'ScheduleMeet'
+      }
     ], // For linking recurring meetings
 
     // Meeting Type & Location
     meetingType: {
       type: String,
       enum: ['Virtual', 'Physical'],
-      required: true,
+      required: true
     },
     location: {
       // For Physical meetings
@@ -74,15 +74,15 @@ const scheduleMeetSchema = new mongoose.Schema(
       mapLink: { type: String }, // Google Maps link
       coordinates: {
         latitude: { type: Number },
-        longitude: { type: Number },
+        longitude: { type: Number }
       },
       // For Virtual meetings
       meetingLink: { type: String },
       meetingPassword: { type: String },
       platform: {
         type: String,
-        enum: ['Zoom', 'Google Meet', 'Microsoft Teams', 'Other'],
-      },
+        enum: ['Zoom', 'Google Meet', 'Microsoft Teams', 'Other']
+      }
     },
 
     // Participants Management
@@ -96,25 +96,25 @@ const scheduleMeetSchema = new mongoose.Schema(
         department: { type: String },
         permissionsLevel: {
           type: String,
-          enum: ['admin', 'manager', 'employee', 'member'],
+          enum: ['admin', 'manager', 'employee', 'member']
         },
         // Participation Status
         status: {
           type: String,
           enum: ['invited', 'accepted', 'declined', 'tentative', 'no-response'],
-          default: 'invited',
+          default: 'invited'
         },
         responseDate: { type: Date },
         joinedAt: { type: Date }, // When they actually joined the meeting
-        leftAt: { type: Date }, // When they left the meeting
-      },
+        leftAt: { type: Date } // When they left the meeting
+      }
     ],
 
     // Meeting Status & Lifecycle
     status: {
       type: String,
       enum: ['scheduled', 'ongoing', 'ended', 'cancelled', 'postponed'],
-      default: 'scheduled',
+      default: 'scheduled'
     },
     actualStartTime: { type: Date }, // When meeting actually started
     actualEndTime: { type: Date }, // When meeting actually ended
@@ -123,8 +123,8 @@ const scheduleMeetSchema = new mongoose.Schema(
       date: { type: Date },
       time: {
         start: { type: String },
-        end: { type: String },
-      },
+        end: { type: String }
+      }
     },
 
     // Notification & Reminder Settings
@@ -133,14 +133,14 @@ const scheduleMeetSchema = new mongoose.Schema(
       reminderTime: {
         type: String,
         enum: ['5 minutes before', '15 minutes before', '30 minutes before', '1 hour before', '2 hours before', '1 day before'],
-        default: '15 minutes before',
+        default: '15 minutes before'
       },
       notificationMethods: [
         {
           type: String,
-          enum: ['push', 'email', 'sms'],
-        },
-      ],
+          enum: ['push', 'email', 'sms']
+        }
+      ]
     },
 
     // Attachments & Resources
@@ -152,11 +152,11 @@ const scheduleMeetSchema = new mongoose.Schema(
         mimeType: { type: String },
         uploadedBy: {
           userID: { type: String, required: true },
-          name: { type: String, required: true },
+          name: { type: String, required: true }
         },
         uploadedAt: { type: Date, default: Date.now },
-        isPublic: { type: Boolean, default: true }, // Can all participants download?
-      },
+        isPublic: { type: Boolean, default: true } // Can all participants download?
+      }
     ],
 
     // Meeting Analytics & Metadata
@@ -168,14 +168,14 @@ const scheduleMeetSchema = new mongoose.Schema(
       averageJoinTime: { type: Number }, // minutes after start time
       meetingDuration: { type: Number }, // actual duration in minutes
       recordingUrl: { type: String }, // if meeting was recorded
-      meetingNotes: { type: String }, // post-meeting notes
+      meetingNotes: { type: String } // post-meeting notes
     },
 
     // Access Control & Permissions
     visibility: {
       type: String,
       enum: ['public', 'private', 'department-only', 'team-only'],
-      default: 'team-only',
+      default: 'team-only'
     },
     allowGuestUsers: { type: Boolean, default: false },
     requireApproval: { type: Boolean, default: false }, // For joining meeting
@@ -192,9 +192,9 @@ const scheduleMeetSchema = new mongoose.Schema(
         meetingId: { type: mongoose.Schema.Types.ObjectId, ref: 'ScheduleMeet' },
         conflictType: {
           type: String,
-          enum: ['time-overlap', 'participant-conflict', 'resource-conflict'],
-        },
-      },
+          enum: ['time-overlap', 'participant-conflict', 'resource-conflict']
+        }
+      }
     ],
 
     // Integration Data
@@ -202,23 +202,23 @@ const scheduleMeetSchema = new mongoose.Schema(
       {
         platform: {
           type: String,
-          enum: ['google', 'outlook', 'apple', 'other'],
+          enum: ['google', 'outlook', 'apple', 'other']
         },
         calendarId: { type: String },
-        eventId: { type: String },
-      },
+        eventId: { type: String }
+      }
     ],
 
     // Technical Metadata
     createdBy: {
       userID: { type: String, required: true },
       name: { type: String, required: true },
-      ipAddress: { type: String },
+      ipAddress: { type: String }
     },
     lastModifiedBy: {
       userID: { type: String },
       name: { type: String },
-      modifiedAt: { type: Date },
+      modifiedAt: { type: Date }
     },
 
     // Soft Delete
@@ -226,19 +226,13 @@ const scheduleMeetSchema = new mongoose.Schema(
     deletedAt: { type: Date },
     deletedBy: {
       userID: { type: String },
-      name: { type: String },
-    },
+      name: { type: String }
+    }
   },
   {
     timestamps: true,
     // Add indexes for better query performance
-    indexes: [
-      { meetingDate: 1, status: 1 },
-      { 'organizer.userID': 1 },
-      { 'participants.userID': 1 },
-      { companyName: 1, department: 1 },
-      { status: 1, meetingDate: 1 },
-    ],
+    indexes: [{ meetingDate: 1, status: 1 }, { 'organizer.userID': 1 }, { 'participants.userID': 1 }, { companyName: 1, department: 1 }, { status: 1, meetingDate: 1 }]
   }
 );
 
@@ -316,7 +310,7 @@ scheduleMeetSchema.methods.addParticipant = function (userInfo, status = 'invite
       roleTitle: userInfo.roleTitle,
       department: userInfo.department,
       permissionsLevel: userInfo.permissionsLevel,
-      status: status,
+      status: status
     });
   }
 
@@ -343,16 +337,16 @@ scheduleMeetSchema.methods.checkConflicts = async function () {
     status: 'scheduled',
     meetingDate: {
       $gte: new Date(this.meetingDate.getTime() - this.duration * 60000),
-      $lte: new Date(this.meetingDate.getTime() + this.duration * 60000),
+      $lte: new Date(this.meetingDate.getTime() + this.duration * 60000)
     },
     'participants.userID': {
-      $in: this.participants.map((p) => p.userID),
-    },
+      $in: this.participants.map((p) => p.userID)
+    }
   });
 
   this.conflictingMeetings = conflicts.map((meeting) => ({
     meetingId: meeting._id,
-    conflictType: 'time-overlap',
+    conflictType: 'time-overlap'
   }));
 
   this.conflictChecked = true;
@@ -367,7 +361,7 @@ scheduleMeetSchema.statics.findUserMeetings = function (userID, options = {}) {
     $or: [{ 'organizer.userID': userID }, { 'participants.userID': userID }],
     status: Array.isArray(status) ? { $in: status } : status,
     meetingDate: { $gte: startDate },
-    isDeleted: { $ne: true },
+    isDeleted: { $ne: true }
   };
 
   if (endDate) {
@@ -382,13 +376,13 @@ scheduleMeetSchema.statics.getAnalytics = function (companyName, options = {}) {
   const {
     startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
     endDate = new Date(),
-    department,
+    department
   } = options;
 
   const matchQuery = {
     companyName,
     meetingDate: { $gte: startDate, $lte: endDate },
-    isDeleted: { $ne: true },
+    isDeleted: { $ne: true }
   };
 
   if (department) {
@@ -407,9 +401,9 @@ scheduleMeetSchema.statics.getAnalytics = function (companyName, options = {}) {
         avgAttendees: { $avg: '$analytics.actualAttendees' },
         totalAttendees: { $sum: '$analytics.actualAttendees' },
         avgDuration: { $avg: '$duration' },
-        totalDuration: { $sum: '$duration' },
-      },
-    },
+        totalDuration: { $sum: '$duration' }
+      }
+    }
   ]);
 };
 

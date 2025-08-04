@@ -6,7 +6,7 @@ const handleValidationErrors = (req, res, next) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({
       error: 'Validation failed',
-      details: errors.array(),
+      details: errors.array()
     });
   }
   next();
@@ -15,12 +15,7 @@ const handleValidationErrors = (req, res, next) => {
 // ==================== TEAM VALIDATION ====================
 
 export const validateTeamInput = [
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('Team name is required')
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Team name must be between 2 and 100 characters'),
+  body('name').trim().notEmpty().withMessage('Team name is required').isLength({ min: 2, max: 100 }).withMessage('Team name must be between 2 and 100 characters'),
 
   body('description').optional().trim().isLength({ max: 500 }).withMessage('Description must not exceed 500 characters'),
 
@@ -38,10 +33,7 @@ export const validateTeamInput = [
 
   body('settings.allowMemberInvites').optional().isBoolean().withMessage('allowMemberInvites must be a boolean'),
 
-  body('settings.defaultProjectTemplate')
-    .optional()
-    .isIn(['Kanban', 'Scrum', 'Blank Project', 'Project Management', 'Task Tracking'])
-    .withMessage('Invalid default project template'),
+  body('settings.defaultProjectTemplate').optional().isIn(['Kanban', 'Scrum', 'Blank Project', 'Project Management', 'Task Tracking']).withMessage('Invalid default project template'),
 
   body('settings.timezone')
     .optional()
@@ -61,7 +53,7 @@ export const validateTeamInput = [
 
   body('memberLimit').optional().isInt({ min: 1, max: 1000 }).withMessage('Member limit must be between 1 and 1000'),
 
-  handleValidationErrors,
+  handleValidationErrors
 ];
 
 // ==================== INVITATION VALIDATION ====================
@@ -73,17 +65,9 @@ export const validateInviteInput = [
 
   body('message').optional().trim().isLength({ max: 500 }).withMessage('Message must not exceed 500 characters'),
 
-  handleValidationErrors,
+  handleValidationErrors
 ];
 
 // ==================== MEMBER ROLE VALIDATION ====================
 
-export const validateMemberRoleUpdate = [
-  body('role').isIn(['admin', 'manager', 'member', 'viewer', 'guest']).withMessage('Invalid role specified'),
-
-  param('teamId').isMongoId().withMessage('Invalid team ID'),
-
-  param('memberId').isMongoId().withMessage('Invalid member ID'),
-
-  handleValidationErrors,
-];
+export const validateMemberRoleUpdate = [body('role').isIn(['admin', 'manager', 'member', 'viewer', 'guest']).withMessage('Invalid role specified'), param('teamId').isMongoId().withMessage('Invalid team ID'), param('memberId').isMongoId().withMessage('Invalid member ID'), handleValidationErrors];
