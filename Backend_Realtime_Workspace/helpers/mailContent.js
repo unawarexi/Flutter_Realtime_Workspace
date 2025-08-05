@@ -127,90 +127,91 @@ class EmailContentGenerator {
     };
   }
 
+  // 2FA code email (for login or sensitive actions)
+  twoFactorCodeEmail(userData) {
+    return {
+      EMAIL_TITLE: 'Verify Your TeamSpot Account',
+      GREETING: `Hi ${userData.fullName || userData.userName}!`,
+      MAIN_CONTENT: `
+        <p style="margin-bottom: 24px;">
+          Use the following verification code to complete your sign-in or sensitive action on TeamSpot.
+        </p>
+        <div style="text-align:center;margin:32px 0;">
+          <span style="display:inline-block;font-size:32px;font-weight:700;letter-spacing:8px;background:#F1F5F9;padding:18px 36px;border-radius:12px;border:2px dashed #1e40af;color:#1e40af;">
+            ${userData.verificationCode}
+          </span>
+        </div>
+        <p style="margin-bottom: 16px;">
+          <strong>This code will expire in ${userData.expiryMinutes || 5} minutes.</strong>
+        </p>
+        <div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:16px 20px;margin:24px 0;border-radius:8px;">
+          <strong>Security Notice:</strong>
+          <ul style="margin:8px 0 0 20px;color:#92400E;">
+            <li>Never share this code with anyone</li>
+            <li>TeamSpot will never ask for this code via phone or email</li>
+            <li>If you didn't request this code, you can safely ignore this email</li>
+          </ul>
+        </div>
+      `,
+      UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(userData.userId, '2fa')
+    };
+  }
+
   // Password reset request
   passwordResetRequest(userData) {
     return {
-      EMAIL_TITLE: 'Reset Your TeamSpot Password 🔒',
-      GREETING: `Hi ${userData.fullName},`,
+      EMAIL_TITLE: 'Reset Your TeamSpot Password',
+      GREETING: `Hi ${userData.fullName || userData.userName},`,
       MAIN_CONTENT: `
-                We received a request to reset your password for your TeamSpot account. If you made this request, 
-                click the button below to create a new password.
-                
-                <br><br>If you didn't request a password reset, you can safely ignore this email. 
-                Your password won't be changed until you create a new one.
-            `,
-      CONTENT_SECTIONS: [
-        {
-          title: '🔐 Security Information',
-          content: `
-                        <ul style="margin-left: 20px; color: #475569;">
-                            <li>This reset link expires in 1 hour</li>
-                            <li>Request made from IP: ${userData.ipAddress || 'Unknown'}</li>
-                            <li>Request time: ${userData.requestTime || new Date().toLocaleString()}</li>
-                        </ul>
-                    `
-        }
-      ],
-      BUTTONS: [
-        {
-          text: 'Reset Password',
-          url: userData.resetUrl,
-          primary: true
-        }
-      ],
-      ADDITIONAL_CONTENT: `
-                <div style="background: #FEF2F2; border: 1px solid #F87171; border-radius: 8px; padding: 16px; margin-top: 20px;">
-                    <h4 style="color: #DC2626; margin-bottom: 8px;">🚨 Security Notice</h4>
-                    <p style="color: #DC2626; margin: 0; font-size: 14px;">
-                        If you didn't request this password reset, please contact our security team immediately at 
-                        <a href="mailto:security@teamspot.com" style="color: #DC2626;">security@teamspot.com</a>
-                    </p>
-                </div>
-            `,
+        <p>
+          We received a request to reset your password for your TeamSpot account. If you made this request, click the button below to create a new password.
+        </p>
+        <div class="button-container" style="text-align:center;margin:32px 0;">
+          <a href="${userData.resetUrl}" class="primary-button" style="background:linear-gradient(135deg,#1e40af 0%,#1e3a8a 100%);color:#fff;text-decoration:none;padding:16px 32px;border-radius:12px;font-weight:600;font-size:16px;">
+            Reset Password
+          </a>
+        </div>
+        <div style="margin-bottom:16px;">
+          If you didn't request a password reset, you can safely ignore this email. Your password won't be changed until you create a new one.
+        </div>
+        <div style="background:#FEF2F2;border:1px solid #F87171;border-radius:8px;padding:16px;margin-top:20px;">
+          <h4 style="color:#DC2626;margin-bottom:8px;">🚨 Security Notice</h4>
+          <p style="color:#DC2626;margin:0;font-size:14px;">
+            If you didn't request this password reset, please contact our security team immediately at
+            <a href="mailto:security@teamspot.com" style="color:#DC2626;">security@teamspot.com</a>
+          </p>
+        </div>
+      `,
       UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(userData.userId, 'security')
     };
   }
 
-  // Password successfully changed
+  // Password changed confirmation
   passwordChangedConfirmation(userData) {
     return {
-      EMAIL_TITLE: 'Your TeamSpot Password Was Changed ✅',
-      GREETING: `Hi ${userData.fullName},`,
+      EMAIL_TITLE: 'Your TeamSpot Password Was Changed',
+      GREETING: `Hi ${userData.fullName || userData.userName},`,
       MAIN_CONTENT: `
-                This email confirms that your TeamSpot account password was successfully changed on 
-                ${userData.changeTime || new Date().toLocaleString()}.
-                
-                <br><br>Your account is secure and you can continue using TeamSpot with your new password.
-            `,
-      CONTENT_SECTIONS: [
-        {
-          title: '🔐 Change Details',
-          content: `
-                        <ul style="margin-left: 20px; color: #475569;">
-                            <li><strong>Change Date:</strong> ${userData.changeTime || new Date().toLocaleString()}</li>
-                            <li><strong>IP Address:</strong> ${userData.ipAddress || 'Unknown'}</li>
-                            <li><strong>Browser:</strong> ${userData.userAgent || 'Unknown'}</li>
-                            <li><strong>Location:</strong> ${userData.location || 'Unknown'}</li>
-                        </ul>
-                    `
-        }
-      ],
-      BUTTONS: [
-        {
-          text: 'Access My Account',
-          url: `${this.baseUrl}/login`,
-          primary: true
-        }
-      ],
-      ADDITIONAL_CONTENT: `
-                <div style="background: #FEF2F2; border: 1px solid #F87171; border-radius: 8px; padding: 16px; margin-top: 20px;">
-                    <h4 style="color: #DC2626; margin-bottom: 8px;">🚨 Didn't Change Your Password?</h4>
-                    <p style="color: #DC2626; margin: 0; font-size: 14px;">
-                        If you didn't make this change, your account may have been compromised. 
-                        <a href="mailto:security@teamspot.com" style="color: #DC2626;">Contact our security team immediately</a>
-                    </p>
-                </div>
-            `,
+        <p>
+          This email confirms that your TeamSpot account password was successfully changed on ${userData.changeTime || new Date().toLocaleString()}.
+        </p>
+        <div class="content-section" style="margin:24px 0;">
+          <div class="section-title" style="font-size:18px;font-weight:600;color:#1e293b;margin-bottom:12px;">🔐 Change Details</div>
+          <ul style="margin-left:20px;color:#475569;">
+            <li><strong>Change Date:</strong> ${userData.changeTime || new Date().toLocaleString()}</li>
+            <li><strong>IP Address:</strong> ${userData.ipAddress || 'Unknown'}</li>
+            <li><strong>Browser:</strong> ${userData.userAgent || 'Unknown'}</li>
+            <li><strong>Location:</strong> ${userData.location || 'Unknown'}</li>
+          </ul>
+        </div>
+        <div style="background:#FEF2F2;border:1px solid #F87171;border-radius:8px;padding:16px;margin-top:20px;">
+          <h4 style="color:#DC2626;margin-bottom:8px;">🚨 Didn't Change Your Password?</h4>
+          <p style="color:#DC2626;margin:0;font-size:14px;">
+            If you didn't make this change, your account may have been compromised.
+            <a href="mailto:security@teamspot.com" style="color:#DC2626;">Contact our security team immediately</a>
+          </p>
+        </div>
+      `,
       UNSUBSCRIBE_LINK: this.generateUnsubscribeLink(userData.userId, 'security')
     };
   }
