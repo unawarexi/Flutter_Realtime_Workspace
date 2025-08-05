@@ -1,19 +1,21 @@
 import express from 'express';
-import { sendFCM } from '../services/fcm.js';
+import { sendNotification, sendMultipleNotifications, sendTopicNotification, subscribeDevicesToTopic,
+  unsubscribeDevicesFromTopic, validateToken, getNotificationTypes
+} from '../controllers/fcm-Controller.js';
+import { firebaseAuthMiddleware } from '../middlewares/firebaseAuthMiddleware.js';
 
 const router = express.Router();
 
-router.post('/send', async (req, res) => {
-  const { fcmToken, code } = req.body;
-  if (!fcmToken || !code) {
-    return res.status(400).json({ success: false, message: 'Missing fcmToken or code' });
-  }
-  const result = await sendFCM(fcmToken, code);
-  if (result.success) {
-    res.json({ success: true, message: 'Notification sent', response: result.response });
-  } else {
-    res.status(500).json({ success: false, message: result.error });
-  }
-});
+
+router.use(firebaseAuthMiddleware);
+
+// Notification endpoints
+router.post('/send', sendNotification);
+router.post('/send-multiple', sendMultipleNotifications);
+router.post('/send-to-topic', sendTopicNotification);
+router.post('/subscribe', subscribeDevicesToTopic);
+router.post('/unsubscribe', unsubscribeDevicesFromTopic);
+router.post('/validate-token', validateToken);
+router.get('/types', getNotificationTypes);
 
 export default router;
