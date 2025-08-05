@@ -14,6 +14,8 @@ import fcmRoutes from './routes/fcmRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
 import scheduleMeetRoutes from './routes/scheduleMeet-Routes.js';
+import twoFactorAuthRoutes from './routes/2FA-Routes.js';
+import { globalLimiter } from './middlewares/rateLimiterMiddleware.js';
 
 
 // Load environment variables
@@ -26,6 +28,8 @@ const app = express();
 app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
+app.set('trust proxy', true);
+app.use(globalLimiter);
 
 // Development logging
 if (process.env.NODE_ENV === 'development') {
@@ -46,6 +50,7 @@ app.use('/api/v1/fcm', fcmRoutes);
 app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/teams', teamRoutes);
 app.use('/api/v1/schedule-meet', scheduleMeetRoutes);
+app.use('/api/v1/2fa', twoFactorAuthRoutes);
 
 // Error handling middleware
 app.use((req, res, next) => {
