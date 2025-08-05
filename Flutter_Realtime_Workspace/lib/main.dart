@@ -10,7 +10,7 @@ import "splash_screen.dart";
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
-// Global keys for app-wide access
+//------------------------------------- Global keys for app-wide access
 class GlobalKeys {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
@@ -18,7 +18,7 @@ class GlobalKeys {
       GlobalKey<ScaffoldMessengerState>();
 }
 
-// Global refresh wrapper that provides refresh functionality to entire app
+//------------------------------- Global refresh wrapper that provides refresh functionality to entire app
 class GlobalRefreshWrapper extends StatefulWidget {
   final Widget child;
   const GlobalRefreshWrapper({super.key, required this.child});
@@ -45,7 +45,7 @@ class _GlobalRefreshWrapperState extends State<GlobalRefreshWrapper> {
   }
 }
 
-// Provider for sharing refresh functionality
+//-------------------------------- Provider for sharing refresh functionality
 class RefreshProvider extends InheritedWidget {
   final GlobalRefreshController controller;
 
@@ -65,7 +65,7 @@ class RefreshProvider extends InheritedWidget {
   }
 }
 
-// Root app wrapper that includes MaterialApp and splash screen
+//------------------------------------- Root app wrapper that includes MaterialApp and splash screen
 class RootApp extends StatelessWidget {
   const RootApp({super.key});
 
@@ -90,6 +90,9 @@ class RootApp extends StatelessWidget {
   }
 }
 
+//======================================== Main entry point for the app
+// Initializes Firebase, app check, and starts the app with Riverpod provider scope
+// Also loads environment variables from .env file
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
@@ -108,6 +111,9 @@ Future<void> main() async {
   );
 }
 
+//------------------------------------- App initializer that handles async initialization
+// This is separated to avoid async gaps in the main widget tree
+// It initializes the notification service and sets up the app state
 class _AppInitializer extends ConsumerStatefulWidget {
   const _AppInitializer({super.key});
 
