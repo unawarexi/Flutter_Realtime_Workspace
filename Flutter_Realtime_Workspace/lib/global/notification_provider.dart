@@ -1,4 +1,4 @@
-import 'package:flutter_realtime_workspace/core/services/notification_service.dart';
+import 'package:flutter_realtime_workspace/features/notification/domain/apis/notification_api.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:dio/dio.dart';
