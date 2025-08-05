@@ -485,4 +485,7 @@ const twoFactorAuthService = new TwoFactorAuthService();
 export default twoFactorAuthService;
 
 // Export individual methods for easier importing
-export const { generateEmailCode, generateSMSCode, verifyEmailCode, verifySMSCode, generateTOTPSecret, confirmTOTPSetup, verifyTOTPCode, disableTOTP, get2FAStatus } = twoFactorAuthService;
+export const {
+  generateEmailCode, generateSMSCode, verifyEmailCode, verifySMSCode, generateTOTPSecret,
+  confirmTOTPSetup, verifyTOTPCode, disableTOTP, get2FAStatus
+} = twoFactorAuthService;
