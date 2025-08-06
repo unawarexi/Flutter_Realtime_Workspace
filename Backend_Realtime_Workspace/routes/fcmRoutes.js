@@ -1,5 +1,6 @@
 import express from 'express';
-import { sendNotification, sendMultipleNotifications, sendTopicNotification, subscribeDevicesToTopic,
+import {
+  sendNotification, sendMultipleNotifications, sendTopicNotification, subscribeDevicesToTopic,
   unsubscribeDevicesFromTopic, validateToken, getNotificationTypes
 } from '../controllers/fcm-Controller.js';
 import { firebaseAuthMiddleware } from '../middlewares/firebaseAuthMiddleware.js';
