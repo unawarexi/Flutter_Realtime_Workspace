@@ -3,7 +3,7 @@ import { generateEmailCode, verifyEmailCode, generateSMSCode, verifySMSCode, gen
   confirmTOTPSetup, verifyTOTPCode, disableTOTP, get2FAStatus, healthCheck
 } from '../controllers/2FA-Controller.js';
 
-import { firebaseAuthMiddleware } from './middleware/firebaseAuthMiddleware.js';
+import { firebaseAuthMiddleware } from '../middlewares/firebaseAuthMiddleware.js';
 
 const router = express.Router();
 

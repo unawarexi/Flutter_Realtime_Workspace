@@ -1,9 +1,9 @@
 import speakeasy from 'speakeasy';
 import qrcode from 'qrcode';
 import crypto from 'crypto';
-import redisClient from '../utils/redisClient.js';
+import redisClient from './redisClient.js';
 import UserInfo from '../models/userInfoModel.js';
-import { getUserByFirebaseUID } from '../middleware/firebaseAuthMiddleware.js';
+import { getUserByFirebaseUID } from '../middlewares/firebaseAuthMiddleware.js';
 
 class TwoFactorAuthService {
   constructor() {
