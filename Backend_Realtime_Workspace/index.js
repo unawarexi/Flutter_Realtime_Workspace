@@ -15,7 +15,7 @@ import projectRoutes from './routes/projectRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
 import scheduleMeetRoutes from './routes/scheduleMeet-Routes.js';
 import twoFactorAuthRoutes from './routes/2FA-Routes.js';
-import { globalLimiter } from './middlewares/rateLimiterMiddleware.js';
+import globalLimiter from './middlewares/rateLimiterMiddleware.js';
 
 
 // Load environment variables
