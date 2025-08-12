@@ -2,11 +2,11 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_realtime_workspace/app.dart';
+import 'package:flutter_realtime_workspace/firebase_options.dart';
 import 'package:flutter_realtime_workspace/global/notification_provider.dart';
-import 'firebase_options.dart';
-import 'app.dart';
+import 'package:flutter_realtime_workspace/splash_screen.dart';
 import 'package:flutter_realtime_workspace/core/network/pull_refresh.dart';
-import "splash_screen.dart";
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
