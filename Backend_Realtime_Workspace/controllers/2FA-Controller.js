@@ -1,5 +1,5 @@
-import twoFactorAuthService from '../services/twoFactorAuthService.js';
-import { firebaseAuthMiddleware } from '../middleware/firebaseAuthMiddleware.js';
+import twoFactorAuthService from '../services/2FA-Services.js';
+
 
 // EMAIL 2FA ENDPOINTS
 export const generateEmailCode = async (req, res) => {
